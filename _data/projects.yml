@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------
+# Every project, tool and experiment on the site.
+# Add an entry here and it appears on the Projects page.
+#
+#   name:       Display name (required)
+#   summary:    One or two sentences: what it does and why it matters
+#   type:       project | tool   (tools are also listed on /tools/)
+#   featured:   true to show it on the home page
+#   status:     optional badge, e.g. "Live", "In progress", "Paper"
+#   tags:       short list of skills/tech, which recruiters skim for
+#   link:       demo / write-up URL, or a path on this site (/tools/x/)
+#   link_label: optional text for the link (default "Open")
+#   repo:       optional source-code URL
+# ---------------------------------------------------------------
+
+- name: Reliability Calculator
+  summary: >-
+    Paste item scores and instantly get Cronbach's alpha, item-total
+    correlations, and alpha-if-item-deleted. Runs entirely in your browser,
+    so no data ever leaves your machine.
+  type: tool
+  featured: true
+  status: Live
+  tags: [Psychometrics, JavaScript, Statistics]
+  link: /tools/reliability/
+  link_label: Try it
+  repo: https://github.com/Sinan-Yavuz/sinanyavuz.github.io/tree/main/tools/reliability
+
+# --- Template: copy, uncomment and fill in -----------------------
+# - name: My Project
+#   summary: What problem it solves, how, and the result.
+#   type: project
+#   featured: true
+#   status: In progress
+#   tags: [Python, R, Machine Learning]
+#   link: https://example.com
+#   repo: https://github.com/Sinan-Yavuz/my-project

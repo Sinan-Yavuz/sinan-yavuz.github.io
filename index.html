@@ -1,36 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinan Yavuz - Personal Website</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <h1>Welcome to My Personal Website</h1>
-    </header>
-    <nav>
-        <ul>
-            <li><a href="#about">About Me</a></li>
-            <li><a href="#projects">Projects</a></li>
-            <li><a href="#contact">Contact</a></li>
-        </ul>
-    </nav>
-    <section id="about">
-        <h2>About Me</h2>
-        <p>Psychometrician, data scientist and a pilot.</p>
-    </section>
-    <section id="projects">
-        <h2>Projects</h2>
-        <p>Some of my projects will be added here later.</p>
-    </section>
-    <section id="contact">
-        <h2>Contact</h2>
-        <p>Provide your contact information or a contact form here.</p>
-    </section>
-    <footer>
-        <p>© 2023 Your Name. All rights reserved.</p>
-    </footer>
-</body>
-</html>
+---
+layout: default
+---
+<section class="hero">
+  <div class="avatar" aria-hidden="true">
+    <span>{% assign n = site.author.name | split: " " %}{% for w in n %}{{ w | slice: 0 }}{% endfor %}</span>
+    <img src="https://github.com/{{ site.author.github }}.png?size=240" alt="" width="120" height="120" onerror="this.remove()">
+  </div>
+  <div>
+    <p class="eyebrow">{{ site.tagline }}</p>
+    <h1>Hi, I'm {{ site.author.name | split: " " | first }}.</h1>
+    <p class="lead">
+      I turn messy data into sound measurement and clear decisions. I work at the
+      intersection of psychometrics, statistics, and data science, and I like
+      building small, practical tools that make that work easier.
+    </p>
+    <p class="hero-actions">
+      <a class="btn" href="{{ '/projects/' | relative_url }}">See my work</a>
+      {% if site.author.resume != "" %}<a class="btn btn-ghost" href="{{ site.author.resume | relative_url }}">Download CV</a>{% endif %}
+      {% if site.author.email != "" %}<a class="btn btn-ghost" href="mailto:{{ site.author.email }}">Get in touch</a>{% endif %}
+    </p>
+  </div>
+</section>
+
+<section class="section" id="about">
+  <h2>About</h2>
+  <div class="about-grid">
+    <div class="prose">
+      <p>
+        I'm a psychometrician and data scientist based in {{ site.author.location }}.
+        I care about getting the measurement right first, then the modeling, and
+        about explaining both so that people actually use the results.
+      </p>
+      <p>
+        Outside of work I'm a pilot, and flying taught me the habits I bring to data
+        work: checklists, careful cross-checks, and calm when things don't go to plan.
+      </p>
+    </div>
+    <ul class="skills">
+      <li><strong>Measurement</strong> IRT, reliability, validity, test design</li>
+      <li><strong>Statistics</strong> Modeling, experimentation, causal inference</li>
+      <li><strong>Data science</strong> Python, R, SQL, machine learning</li>
+      <li><strong>Building</strong> Tools, dashboards, reproducible pipelines</li>
+    </ul>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>Featured work</h2>
+    <a href="{{ '/projects/' | relative_url }}">All projects →</a>
+  </div>
+  <div class="grid">
+    {% assign featured = site.data.projects | where: "featured", true %}
+    {% for project in featured limit: 6 %}
+      {% include project-card.html project=project %}
+    {% endfor %}
+  </div>
+</section>
+
+{% if site.posts.size > 0 %}
+<section class="section">
+  <div class="section-head">
+    <h2>Recent writing</h2>
+    <a href="{{ '/blog/' | relative_url }}">All posts →</a>
+  </div>
+  <ul class="post-list">
+    {% for post in site.posts limit: 3 %}
+    <li>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="section" id="contact">
+  <h2>Contact</h2>
+  <p>I'm always happy to talk about measurement, data, or flying. Find me here:</p>
+  {% include social.html %}
+</section>

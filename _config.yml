@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------
+# Site settings: edit these first.
+# ---------------------------------------------------------------
+title: Sinan Yavuz
+tagline: Psychometrician · Data Scientist · Pilot
+description: >-
+  Personal site of Sinan Yavuz: psychometrician and data scientist building
+  tools for measurement, statistics, and data. Projects, side tools, and writing.
+
+# Use the address where the site is actually served (see README).
+url: "https://sinan-yavuz.github.io"
+baseurl: ""
+
+author:
+  name: Sinan Yavuz
+  location: Seattle, WA
+  # Optional: leave a field blank ("") and its link is hidden.
+  email: ""            # e.g. you@example.com
+  github: Sinan-Yavuz
+  linkedin: ""         # LinkedIn handle only, e.g. sinan-yavuz
+  scholar: ""          # Full Google Scholar URL
+  resume: ""           # e.g. /assets/Sinan-Yavuz-CV.pdf (put the PDF in assets/)
+
+# ---------------------------------------------------------------
+# Build settings (all supported by GitHub Pages out of the box)
+# ---------------------------------------------------------------
+markdown: kramdown
+permalink: /blog/:year/:month/:title/
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+feed:
+  path: /blog/feed.xml
+
+defaults:
+  - scope: { path: "", type: posts }
+    values: { layout: post }
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor

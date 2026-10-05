@@ -1,0 +1,116 @@
+---
+layout: page
+title: Reliability Calculator
+intro: Paste item scores (one row per respondent, one column per item) to get Cronbach's alpha and item statistics. Everything runs in your browser.
+description: Free in-browser Cronbach's alpha calculator with item-total correlations and alpha-if-item-deleted.
+---
+<style>
+  .tool { display: grid; gap: 1rem; padding-bottom: 3rem; }
+  .tool textarea { width: 100%; min-height: 220px; font: 14px/1.5 var(--mono); padding: .75rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); resize: vertical; }
+  .tool-row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+  .tool label { color: var(--muted); font-size: .92rem; display: flex; gap: .4rem; align-items: center; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem 1rem; }
+  .stat b { display: block; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: .85rem; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  .tool table { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums; background: var(--surface); }
+  .tool th, .tool td { padding: .5rem .75rem; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .tool th:first-child, .tool td:first-child { text-align: left; }
+  .tool tr:last-child td { border-bottom: 0; }
+  .tool .flag { color: #d97706; font-weight: 600; }
+  .tool .error { color: #dc2626; }
+  .tool .note { color: var(--muted); font-size: .88rem; margin: 0; }
+</style>
+
+<div class="tool">
+  <textarea id="data" spellcheck="false" aria-label="Item scores" placeholder="Q1,Q2,Q3,Q4&#10;4,5,4,3&#10;3,4,3,3&#10;..."></textarea>
+  <div class="tool-row">
+    <button class="btn" id="run" type="button">Calculate</button>
+    <button class="btn btn-ghost" id="sample" type="button">Load sample data</button>
+    <label><input type="checkbox" id="header" checked> First row is item names</label>
+  </div>
+  <p class="note">Separate values with commas, tabs (paste straight from Excel or Sheets), semicolons, or spaces. Rows with missing values are dropped (listwise deletion).</p>
+  <div id="out" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  var SAMPLE = "Q1,Q2,Q3,Q4,Q5\n4,5,4,4,2\n3,4,3,3,4\n5,5,4,5,1\n2,2,3,2,3\n4,4,4,3,5\n3,3,2,3,2\n5,4,5,5,4\n1,2,2,1,3\n4,4,3,4,1\n3,3,4,3,5\n2,3,2,2,2\n5,5,5,4,3";
+
+  function mean(a) { var s = 0; for (var i = 0; i < a.length; i++) s += a[i]; return s / a.length; }
+  function variance(a) { var m = mean(a), s = 0; for (var i = 0; i < a.length; i++) s += (a[i] - m) * (a[i] - m); return s / (a.length - 1); }
+  function corr(x, y) {
+    var mx = mean(x), my = mean(y), sxy = 0, sxx = 0, syy = 0;
+    for (var i = 0; i < x.length; i++) { var dx = x[i] - mx, dy = y[i] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; }
+    return sxx && syy ? sxy / Math.sqrt(sxx * syy) : NaN;
+  }
+  function alpha(cols) {
+    var k = cols.length, n = cols[0].length, sumVar = 0, totals = new Array(n).fill(0);
+    cols.forEach(function (c) { sumVar += variance(c); c.forEach(function (v, i) { totals[i] += v; }); });
+    var vt = variance(totals);
+    return vt ? (k / (k - 1)) * (1 - sumVar / vt) : NaN;
+  }
+  function fmt(x, d) { return isFinite(x) ? x.toFixed(d === undefined ? 3 : d) : "n/a"; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function label(a) {
+    if (!isFinite(a)) return "";
+    if (a >= .9) return "Excellent"; if (a >= .8) return "Good"; if (a >= .7) return "Acceptable";
+    if (a >= .6) return "Questionable"; if (a >= .5) return "Poor"; return "Unacceptable";
+  }
+
+  function parse(text, hasHeader) {
+    var lines = text.trim().split(/\r?\n/).filter(function (l) { return l.trim(); });
+    var split = function (l) { return l.trim().split(/\s*[,;\t]\s*|\s+/); };
+    var names = null;
+    if (hasHeader && lines.length) names = split(lines.shift());
+    var rows = lines.map(split);
+    var k = names ? names.length : (rows[0] || []).length;
+    if (!names) { names = []; for (var j = 0; j < k; j++) names.push("Item " + (j + 1)); }
+    var complete = [], dropped = 0;
+    rows.forEach(function (r) {
+      var nums = r.map(function (v) { return v === "" || /^(na|nan|\.)$/i.test(v) ? NaN : Number(v); });
+      if (nums.length === k && nums.every(isFinite)) complete.push(nums); else dropped++;
+    });
+    return { names: names, rows: complete, dropped: dropped };
+  }
+
+  function run() {
+    var out = $("out"), d = parse($("data").value, $("header").checked);
+    var k = d.names.length, n = d.rows.length;
+    if (k < 2) { out.innerHTML = '<p class="error">Need at least 2 items (columns).</p>'; return; }
+    if (n < 3) { out.innerHTML = '<p class="error">Need at least 3 complete rows; found ' + n + '.</p>'; return; }
+
+    var cols = d.names.map(function (_, j) { return d.rows.map(function (r) { return r[j]; }); });
+    var a = alpha(cols);
+    var totals = d.rows.map(function (r) { return r.reduce(function (s, v) { return s + v; }, 0); });
+
+    var body = cols.map(function (c, j) {
+      var rest = totals.map(function (t, i) { return t - c[i]; });
+      var r = corr(c, rest);
+      var aDel = k > 2 ? alpha(cols.filter(function (_, m) { return m !== j; })) : NaN;
+      var flag = (isFinite(r) && r < .3) || (isFinite(aDel) && aDel > a + .001);
+      return "<tr><td>" + esc(d.names[j]) + (flag ? ' <span class="flag" title="Low item-total correlation or alpha improves if removed">⚑</span>' : "") +
+        "</td><td>" + fmt(mean(c), 2) + "</td><td>" + fmt(Math.sqrt(variance(c)), 2) +
+        "</td><td>" + fmt(r) + "</td><td>" + fmt(aDel) + "</td></tr>";
+    }).join("");
+
+    out.innerHTML =
+      '<div class="stats">' +
+        '<div class="stat"><b>' + fmt(a) + '</b><span>Cronbach\'s α · ' + label(a) + '</span></div>' +
+        '<div class="stat"><b>' + k + '</b><span>Items</span></div>' +
+        '<div class="stat"><b>' + n + '</b><span>Complete responses' + (d.dropped ? " (" + d.dropped + " dropped)" : "") + '</span></div>' +
+        '<div class="stat"><b>' + fmt(mean(totals), 2) + '</b><span>Mean total score (SD ' + fmt(Math.sqrt(variance(totals)), 2) + ')</span></div>' +
+      '</div>' +
+      '<h3 style="margin:1.5rem 0 .75rem">Item statistics</h3>' +
+      '<div class="table-wrap"><table><thead><tr><th>Item</th><th>Mean</th><th>SD</th><th>Corrected item-total r</th><th>α if deleted</th></tr></thead><tbody>' +
+      body + '</tbody></table></div>' +
+      '<p class="note" style="margin-top:.75rem">⚑ flags items with corrected item-total r &lt; .30 or whose removal would raise α. Check those for reverse-keying or wording issues. The qualitative labels follow common rules of thumb (George &amp; Mallery, 2003) and are not hard cutoffs.</p>';
+  }
+
+  $("run").addEventListener("click", run);
+  $("sample").addEventListener("click", function () { $("data").value = SAMPLE; $("header").checked = true; run(); });
+})();
+</script>
