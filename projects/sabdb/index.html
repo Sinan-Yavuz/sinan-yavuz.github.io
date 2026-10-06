@@ -30,6 +30,13 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
   .sb-head .lead { max-width: 68ch; }
   .sb-links { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
 
+  .paper { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.5rem; max-width: 78ch; }
+  .paper p { margin: 0; }
+  .paper-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+  .paper-title { font-weight: 600; font-size: 1.05rem; margin-top: .3rem !important; text-wrap: balance; }
+  .paper-title a { color: var(--text); }
+  .paper-meta { color: var(--muted); font-size: .88rem; margin-top: .2rem !important; }
+  .paper-abs { color: var(--muted); font-size: .92rem; margin-top: .6rem !important; }
   .methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0 2rem; }
   .method { border-top: 3px solid var(--c); padding-top: .75rem; }
   .method h3 { font-size: 1rem; display: flex; align-items: baseline; gap: .5rem; }
@@ -113,9 +120,22 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
   </p>
   <p class="sb-links">
     <a class="btn" href="#playground">Try the simulation</a>
+    <a class="btn btn-ghost" href="https://arxiv.org/abs/2608.07708">Read the paper</a>
     <a class="btn btn-ghost" href="https://github.com/Sinan-Yavuz/SABDB">Code on GitHub</a>
   </p>
 </header>
+
+<aside class="paper">
+  <p class="paper-label">Paper</p>
+  <p class="paper-title"><a href="https://arxiv.org/abs/2608.07708">Small Area Bayesian Dynamic Borrowing: Adaptive Subgroup Estimation for Large-Scale Educational Assessments</a></p>
+  <p class="paper-meta">Sinan Yavuz &amp; David Kaplan · arXiv:2608.07708 · 2026</p>
+  <p class="paper-abs">
+    NAEP suppresses subgroup estimates when fewer than 62 students are sampled, which falls hardest on
+    historically underrepresented groups. The paper compares SABDB with unit-level HBSAE in a simulation
+    modeled on NAEP grade 8 mathematics and a PISA 2018 case study. SABDB achieved near-nominal interval
+    coverage in both, while HBSAE's intervals were narrow but badly miscalibrated.
+  </p>
+</aside>
 
 <div class="methods">
   <div class="method" style="--c: var(--s-direct)">
@@ -239,7 +259,11 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
     </p>
   </div>
   <h2 style="margin-top:2rem">Cite</h2>
-  <div class="cite">Yavuz, S. (2026). Subgroup Achievement Estimation for Large-Scale Assessments:
+  <div class="cite">Yavuz, S., &amp; Kaplan, D. (2026). Small Area Bayesian Dynamic Borrowing:
+Adaptive Subgroup Estimation for Large-Scale Educational Assessments.
+arXiv:2608.07708. https://arxiv.org/abs/2608.07708
+
+Yavuz, S. (2026). Subgroup Achievement Estimation for Large-Scale Assessments:
 Small Area Bayesian Dynamic Borrowing Model [Doctoral dissertation,
 University of Wisconsin–Madison].</div>
 </section>

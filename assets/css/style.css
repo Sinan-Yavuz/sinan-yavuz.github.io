@@ -84,7 +84,8 @@ pre code { background: none; padding: 0; }
 .card-top { display: flex; justify-content: space-between; align-items: start; gap: .5rem; }
 .card h3 a { color: var(--text); }
 .card p { color: var(--muted); font-size: .95rem; margin: .5rem 0; }
-.card-links { margin-top: auto !important; display: flex; gap: 1rem; padding-top: .5rem; }
+.card-links { margin-top: auto !important; display: flex; flex-wrap: wrap; gap: .25rem 1rem; padding-top: .5rem; }
+.card-links a { white-space: nowrap; }
 .badge { font-size: .72rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: .15rem .55rem; border-radius: 999px; white-space: nowrap; }
 .tags { list-style: none; padding: 0; margin: .25rem 0; display: flex; flex-wrap: wrap; gap: .4rem; }
 .tag { font-size: .75rem; color: var(--muted); border: 1px solid var(--border); padding: .1rem .5rem; border-radius: 999px; margin-left: .3rem; }

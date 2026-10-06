@@ -11,12 +11,13 @@
 #   link:       demo / write-up URL, or a path on this site (/tools/x/)
 #   link_label: optional text for the link (default "Open")
 #   repo:       optional source-code URL
+#   paper:      optional paper URL (arXiv, DOI)
 # ---------------------------------------------------------------
 
-- name: "SABDB: Small Area Bayesian Dynamic Borrowing"
+- name: SABDB
   summary: >-
-    My dissertation model for estimating subgroup achievement in large-scale
-    assessments like NAEP and PISA. It borrows strength across states only as
+    Small Area Bayesian Dynamic Borrowing, my dissertation model for estimating
+    subgroup achievement in large-scale assessments like NAEP and PISA. It borrows strength across states only as
     much as the data support. Includes an interactive simulation that compares
     it with standard hierarchical models.
   type: project
@@ -26,6 +27,21 @@
   link: /projects/sabdb/
   link_label: Interactive demo
   repo: https://github.com/Sinan-Yavuz/SABDB
+  paper: https://arxiv.org/abs/2608.07708
+
+- name: miBMA
+  summary: >-
+    R package for multiple imputation under Bayesian model averaging. It accounts
+    for uncertainty in which imputation model is right, not just in its
+    parameters, and plugs into mice as method = "miBMA". Companion software to
+    Kaplan & Yavuz (2020), Multivariate Behavioral Research.
+  type: project
+  featured: true
+  status: Published · 2020
+  tags: [R package, Missing data, Bayesian model averaging, mice]
+  link: https://github.com/Sinan-Yavuz/miBMA
+  link_label: Install from GitHub
+  paper: https://doi.org/10.1080/00273171.2019.1657790
 
 # --- Template: copy, uncomment and fill in -----------------------
 # - name: My Project

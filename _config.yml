@@ -2,10 +2,10 @@
 # Site settings: edit these first.
 # ---------------------------------------------------------------
 title: Sinan Yavuz
-tagline: Psychometrician · Data Scientist · Pilot
+tagline: Psychometrician · Quantitative Methodologist · Pilot
 description: >-
-  Personal site of Sinan Yavuz: psychometrician and data scientist building
-  tools for measurement, statistics, and data. Projects, side tools, and writing.
+  Personal site of Sinan Yavuz: psychometrician and quantitative methodologist
+  working on Bayesian methods for educational measurement. Research, projects, and writing.
 
 # Use the address where the site is actually served (see README).
 url: "https://sinan-yavuz.github.io"
