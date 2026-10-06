@@ -45,6 +45,19 @@
   repo: https://github.com/Sinan-Yavuz/miBMA
   paper: https://doi.org/10.1080/00273171.2019.1657790
 
+- name: Bayesian Growth Models
+  summary: >-
+    My Hacettepe PhD thesis, which compares maximum likelihood and Bayesian estimation of a three-level
+    quadratic growth model of math achievement from kindergarten to grade 5 (ECLS-K 2011), using
+    priors built from the 1998 cohort. Includes an interactive simulation showing when prior
+    information helps in small samples and when it misleads.
+  type: project
+  featured: false
+  status: PhD thesis · 2021
+  tags: [Bayesian statistics, Growth models, Multilevel models, brms, lme4, ECLS-K]
+  link: /projects/growth/
+  link_label: Interactive demo
+
 # --- Template: copy, uncomment and fill in -----------------------
 # - name: My Project
 #   summary: What problem it solves, how, and the result.
