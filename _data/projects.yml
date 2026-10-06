@@ -33,14 +33,16 @@
   summary: >-
     R package for multiple imputation under Bayesian model averaging. It accounts
     for uncertainty in which imputation model is right, not just in its
-    parameters, and plugs into mice as method = "miBMA". Companion software to
-    Kaplan & Yavuz (2020), Multivariate Behavioral Research.
+    parameters, and plugs into mice as method = "miBMA". Includes an
+    interactive simulation comparing it with standard imputation. Companion
+    software to Kaplan & Yavuz (2020), Multivariate Behavioral Research.
   type: project
   featured: true
   status: Published · 2020
   tags: [R package, Missing data, Bayesian model averaging, mice]
-  link: https://github.com/Sinan-Yavuz/miBMA
-  link_label: Install from GitHub
+  link: /projects/mibma/
+  link_label: Interactive demo
+  repo: https://github.com/Sinan-Yavuz/miBMA
   paper: https://doi.org/10.1080/00273171.2019.1657790
 
 # --- Template: copy, uncomment and fill in -----------------------

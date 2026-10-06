@@ -1,0 +1,445 @@
+---
+layout: default
+title: miBMA
+description: Interactive demo of miBMA, multiple imputation under Bayesian model averaging, compared with mice's standard method and complete-case analysis.
+---
+<link rel="stylesheet" href="{{ '/assets/css/demo.css' | relative_url }}">
+<style>
+  /* Series colors for this demo; shared demo styles live in /assets/css/demo.css. */
+  :root { --s-mibma: #2a78d6; --s-norm: #eb6834; --s-cc: #1baf7a; --s-obs: #a3a9b3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --s-mibma: #3987e5; --s-norm: #d95926; --s-cc: #199e70; --s-obs: #4b5261; }
+  }
+  :root[data-theme="dark"] { --s-mibma: #3987e5; --s-norm: #d95926; --s-cc: #199e70; --s-obs: #4b5261; }
+  .presets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; font-size: .88rem; color: var(--muted); }
+  .chip { font: inherit; font-size: .85rem; padding: .3rem .75rem; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; }
+  .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .two-even { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; }
+  @media (max-width: 760px) { .two-even { grid-template-columns: 1fr; } }
+</style>
+
+<header class="demo-head">
+  <p class="eyebrow">R package · Multivariate Behavioral Research, 2020</p>
+  <h1>miBMA: Multiple Imputation under Bayesian Model Averaging</h1>
+  <p class="lead">
+    When you impute missing data, you have to pick an imputation model, and standard multiple imputation
+    treats that choice as if it were certain. miBMA averages over the plausible imputation models with
+    Bayesian model averaging, so uncertainty about <em>which</em> predictors belong is carried into the
+    imputations. Change the data below and compare it with mice's standard method and with simply
+    dropping incomplete cases.
+  </p>
+  <p class="demo-links">
+    <a class="btn" href="#playground">Try the simulation</a>
+    <a class="btn btn-ghost" href="https://doi.org/10.1080/00273171.2019.1657790">Read the paper</a>
+    <a class="btn btn-ghost" href="https://github.com/Sinan-Yavuz/miBMA">Code on GitHub</a>
+  </p>
+</header>
+
+<aside class="paper">
+  <p class="paper-label">Paper</p>
+  <p class="paper-title"><a href="https://doi.org/10.1080/00273171.2019.1657790">An Approach to Addressing Multiple Imputation Model Uncertainty Using Bayesian Model Averaging</a></p>
+  <p class="paper-meta">David Kaplan &amp; Sinan Yavuz · <em>Multivariate Behavioral Research</em>, 55(4), 553–567 · 2020</p>
+  <p class="paper-abs">
+    Bayesianly proper multiple imputation accounts for uncertainty in the imputation model's parameters
+    but not in the model itself. The paper applies Bayesian model averaging inside the imputation step
+    under the fully conditional specification approach. The miBMA package implements it as a drop-in
+    method for <code>mice</code>: <code>mice(data, method = "miBMA")</code>.
+  </p>
+</aside>
+
+<div class="methods">
+  <div class="method" style="--c: var(--s-cc)">
+    <h3>Complete case <small>drop missing rows</small></h3>
+    <p>Analyze only the rows where Y was observed. Simple and fine when data are missing completely at random, but biased when missingness depends on other variables.</p>
+  </div>
+  <div class="method" style="--c: var(--s-norm)">
+    <h3>mice "norm" <small>standard practice</small></h3>
+    <p>Bayesian linear regression imputation using every candidate predictor. It accounts for uncertainty in the coefficients but assumes the full model is the right one.</p>
+  </div>
+  <div class="method" style="--c: var(--s-mibma)">
+    <h3>miBMA <small>this research</small></h3>
+    <p>Scores every subset of predictors by BIC, keeps the plausible ones (Occam's window), and imputes from their posterior-weighted average.</p>
+  </div>
+</div>
+
+<section id="playground">
+  <form class="controls" id="controls" onsubmit="return false">
+    <div class="presets" role="group" aria-label="Scenarios">
+      <span>Scenarios:</span>
+      <button type="button" class="chip" data-preset="small" aria-pressed="true">Small sample, many predictors</button>
+      <button type="button" class="chip" data-preset="example" aria-pressed="false">Package example</button>
+      <button type="button" class="chip" data-preset="large" aria-pressed="false">Large sample, strong signal</button>
+    </div>
+    <div class="ctl">
+      <label for="n">Sample size <output id="n-out"></output></label>
+      <input type="range" id="n" min="50" max="500" step="10" value="60">
+      <p>Total rows, before any values go missing.</p>
+    </div>
+    <div class="ctl">
+      <label for="miss">Missing Y <output id="miss-out"></output></label>
+      <input type="range" id="miss" min="10" max="60" step="5" value="50">
+      <p>Share of rows where the outcome Y is missing.</p>
+    </div>
+    <div class="ctl">
+      <label for="mech">Why values are missing</label>
+      <select id="mech">
+        <option value="mar">MAR: missing when X1 is high</option>
+        <option value="mcar">MCAR: missing at random</option>
+      </select>
+      <p>The MAR setting follows the package's example script.</p>
+    </div>
+    <div class="ctl">
+      <label for="p">Candidate predictors <output id="p-out"></output></label>
+      <input type="range" id="p" min="4" max="12" step="1" value="12">
+      <p>Variables available to the imputation model.</p>
+    </div>
+    <div class="ctl">
+      <label for="k">Predictors that matter <output id="k-out"></output></label>
+      <input type="range" id="k" min="1" max="12" step="1" value="2">
+      <p>X1 to Xk affect Y; the rest are noise.</p>
+    </div>
+    <div class="ctl">
+      <label for="rho">Correlation among predictors <output id="rho-out"></output></label>
+      <input type="range" id="rho" min="0" max="0.8" step="0.05" value="0.5">
+      <p>Higher values make it harder to tell which predictors matter.</p>
+    </div>
+    <div class="ctl">
+      <label for="r2">Signal strength (R²) <output id="r2-out"></output></label>
+      <input type="range" id="r2" min="0.1" max="0.8" step="0.05" value="0.3">
+      <p>Share of Y's variance explained by the true predictors.</p>
+    </div>
+    <div class="run-row">
+      <button class="btn" type="button" id="rerun">Draw new samples</button>
+      <div class="bar-progress" aria-hidden="true"><span id="progress"></span></div>
+      <span class="status" id="status" aria-live="polite">Starting…</span>
+    </div>
+  </form>
+
+  <div class="results" id="results">
+    <div>
+      <p class="callout" id="callout">Running the first simulation…</p>
+    </div>
+
+    <div>
+      <h2>Estimating the mean of Y</h2>
+      <p class="sub" id="summary-sub">Each method estimates the population mean of Y (true value 0), with 20 imputations pooled by Rubin's rules.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="summary">
+          <thead><tr><th>Method</th><th>Bias</th><th>RMSE</th><th>95% interval coverage</th><th>Avg interval width</th><th>Imputation error</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-even">
+      <div>
+        <h2>Error and coverage</h2>
+        <p class="sub">RMSE of the estimated mean (lower is better) and how often the 95% interval contains the true value (closer to 95% is better).</p>
+        <div class="legend" id="legend-err"></div>
+        <div class="chart" id="chart-err"><div class="tip" hidden></div></div>
+      </div>
+      <div>
+        <h2>Which predictors BMA keeps</h2>
+        <p class="sub">miBMA's posterior inclusion probability for each predictor, averaged over replications. mice "norm" always uses all of them.</p>
+        <div class="legend" id="legend-incl"></div>
+        <div class="chart" id="chart-incl"><div class="tip" hidden></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="chart-head">
+        <div>
+          <h2>One dataset, imputed</h2>
+          <p class="sub" id="scatter-sub">Y against X1 for the first replication. Hollow circles are the true values that went missing; filled colored points are one set of imputations.</p>
+        </div>
+        <label>Imputed by
+          <select id="scatter-method"><option value="mibma">miBMA</option><option value="norm">mice "norm"</option></select>
+        </label>
+      </div>
+      <div class="legend" id="legend-scatter"></div>
+      <div class="chart" id="chart-scatter"><div class="tip" hidden></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="notes">
+  <h2>About this demo</h2>
+  <div class="prose">
+    <p>
+      Each replication draws equicorrelated standard normal predictors, builds Y from the first <em>k</em>
+      of them plus noise, removes Y for some rows, and runs all three methods. The imputation step mirrors
+      the <a href="https://github.com/Sinan-Yavuz/miBMA">miBMA package</a>: BIC-weighted averaging over models
+      in Occam's window (odds ratio 20), then the same σ and β draw that mice's "norm" method uses, centered
+      on the averaged coefficients. Results are averaged over 40 replications with 20 imputations each.
+    </p>
+    <p>
+      To run in your browser, the demo has one incomplete variable, so mice's chained iterations reduce to a
+      single pass, and it searches all predictor subsets directly instead of through <code>regsubsets</code>.
+      Results here illustrate how the methods behave. They aren't the paper's reported results.
+    </p>
+  </div>
+  <h2 style="margin-top:2rem">Cite</h2>
+  <div class="cite">Kaplan, D., &amp; Yavuz, S. (2020). An Approach to Addressing Multiple Imputation
+Model Uncertainty Using Bayesian Model Averaging. Multivariate Behavioral
+Research, 55(4), 553–567. https://doi.org/10.1080/00273171.2019.1657790</div>
+</section>
+
+<script src="{{ '/assets/js/demo-charts.js' | relative_url }}"></script>
+<script src="mibma-sim.js"></script>
+<script>
+(function () {
+  var METHODS = [
+    { key: "mibma", name: "miBMA", color: "var(--s-mibma)" },
+    { key: "norm", name: "mice “norm”", color: "var(--s-norm)" },
+    { key: "cc", name: "Complete case", color: "var(--s-cc)" }
+  ];
+  var REPS = 40;
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DemoCharts, el = D.el, txt = D.txt, fmt = D.fmt, pct = D.pct, legend = D.legend,
+    ticks = D.ticks, roundRight = D.roundRight, roundTop = D.roundTop, attachTip = D.attachTip, clearSvg = D.clearSvg;
+
+  // ---------- Controls ----------
+  var sliders = ["n", "miss", "p", "k", "rho", "r2"];
+  function params() {
+    var p = +$("p").value;
+    return { n: +$("n").value, miss: +$("miss").value / 100, p: p, k: Math.min(+$("k").value, p),
+      rho: +$("rho").value, r2: +$("r2").value, mech: $("mech").value };
+  }
+  function syncOutputs() {
+    var p = +$("p").value;
+    $("k").max = p; if (+$("k").value > p) $("k").value = p;
+    $("n-out").textContent = $("n").value;
+    $("miss-out").textContent = $("miss").value + "%";
+    $("p-out").textContent = p;
+    $("k-out").textContent = $("k").value;
+    $("rho-out").textContent = (+$("rho").value).toFixed(2);
+    $("r2-out").textContent = (+$("r2").value).toFixed(2);
+  }
+
+  // ---------- Simulation runner ----------
+  var worker = null, runId = 0, seed = 5959, acc, first, debounce;
+  function start() {
+    runId++;
+    var id = runId, q = params();
+    acc = { reps: 0, outs: [], q: q };
+    $("results").classList.add("busy");
+    $("status").textContent = "Simulating 0 / " + REPS;
+    $("progress").style.width = "0";
+    if (worker) worker.terminate();
+    try { worker = new Worker("mibma-worker.js"); } catch (e) { worker = null; }
+    var onRep = function (o) {
+      if (o.id !== runId) return;
+      if (o.data) first = o;
+      acc.reps++; acc.outs.push(o);
+      $("status").textContent = (acc.reps < REPS ? "Simulating " : "Done: ") + acc.reps + " / " + REPS + " replications";
+      $("progress").style.width = (100 * acc.reps / REPS) + "%";
+      if (acc.reps === REPS || acc.reps % 10 === 1) render();
+      if (acc.reps === REPS) $("results").classList.remove("busy");
+    };
+    if (worker) {
+      worker.onmessage = function (e) { onRep(e.data); };
+      worker.onerror = function () { worker = null; fallback(); };
+      worker.postMessage({ id: id, params: q, reps: REPS, seed: seed });
+    } else fallback();
+    function fallback() {
+      var i = acc.reps;
+      (function step() {
+        if (id !== runId || i >= REPS) return;
+        var o = MIBMASim.replicate(q, seed + i * 7919, { keepData: i === 0 });
+        o.id = id; i++; onRep(o); setTimeout(step, 0);
+      })();
+    }
+  }
+  function schedule() { syncOutputs(); clearTimeout(debounce); debounce = setTimeout(start, 250); }
+
+  // ---------- Metrics ----------
+  function metrics() {
+    var out = {};
+    METHODS.forEach(function (m) {
+      var o = { bias: 0, se: 0, cov: 0, w: 0, imp: 0, n: 0 };
+      acc.outs.forEach(function (r) {
+        var e = r[m.key], d = e.est - r.truth;
+        o.bias += d; o.se += d * d; o.cov += (r.truth >= e.lo && r.truth <= e.hi) ? 1 : 0; o.w += e.hi - e.lo;
+        o.imp += e.impRMSE || 0; o.n++;
+      });
+      o.bias /= o.n; o.rmse = Math.sqrt(o.se / o.n); o.cov /= o.n; o.w /= o.n; o.imp = m.key === "cc" ? NaN : o.imp / o.n;
+      out[m.key] = o;
+    });
+    return out;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    var m = metrics();
+    renderCallout(m); renderSummary(m); renderErr(m); renderIncl(); renderScatter();
+  }
+
+  function renderCallout(m) {
+    var a = m.mibma.rmse, b = m.norm.rmse, diff = (b - a) / b, parts = [];
+    if (Math.abs(diff) < 0.03) parts.push("miBMA and mice “norm” estimate the mean about equally well here");
+    else parts.push("miBMA's error is <b>" + Math.round(Math.abs(diff) * 100) + "% " + (diff > 0 ? "lower" : "higher") + "</b> than mice “norm”'s");
+    if (acc.q.mech === "mar" && Math.abs(m.cc.bias) > 2 * Math.abs(m.mibma.bias))
+      parts.push("dropping incomplete rows is biased by <b>" + fmt(m.cc.bias, 2) + "</b>, because the rows with high X1 (and so high Y) are the ones missing");
+    var avgIncl = acc.outs.reduce(function (s, o) { return s + o.incl[0]; }, 0) / acc.outs.length;
+    var tail = "";
+    var weakX1 = acc.q.mech === "mar" && avgIncl < 0.7 && m.mibma.bias < -0.05;
+    var whyX1 = "BMA gives X1 only " + pct(avgIncl) + " of its model weight. With the top of X1 missing, the observed rows carry little evidence for it, so miBMA imputes values that are slightly too low.";
+    if (diff > 0.03 && weakX1)
+      tail = " Averaging over models keeps noise predictors from adding variance, which outweighs a small bias. " + whyX1;
+    else if (diff > 0.03)
+      tail = " Averaging over models keeps noise predictors from adding variance to the imputations.";
+    else if (weakX1)
+      tail = " " + whyX1 + " More signal or a larger sample fixes this.";
+    $("callout").innerHTML = parts.join("; ") + "." + tail;
+  }
+
+  function renderSummary(m) {
+    var tb = $("summary").querySelector("tbody"); tb.textContent = "";
+    METHODS.forEach(function (meth) {
+      var o = m[meth.key], tr = document.createElement("tr"), c0 = document.createElement("td");
+      var k = document.createElement("span"); k.className = "key"; k.style.setProperty("--c", meth.color);
+      c0.appendChild(k); c0.appendChild(document.createTextNode(meth.name)); tr.appendChild(c0);
+      [(o.bias >= 0 ? "+" : "") + fmt(o.bias, 3), fmt(o.rmse, 3), pct(o.cov), fmt(o.w, 3), meth.key === "cc" ? "n/a" : fmt(o.imp, 2)].forEach(function (v, i) {
+        var td = document.createElement("td"); td.textContent = v;
+        if (i === 2 && o.cov < 0.9) { var pill = document.createElement("span"); pill.className = "pill-warn"; pill.textContent = "⚠ Under-covers"; td.appendChild(pill); }
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    $("summary-sub").textContent = "Across " + acc.reps + " replications. Each method estimates the population mean of Y (true value 0); the imputation methods pool 20 imputations with Rubin's rules. Imputation error is the RMSE of imputed values against the values that went missing.";
+  }
+
+  function hbars(chart, rows, opts) {
+    var W = Math.max(260, chart.clientWidth), rowH = 26, ml = opts.ml || 110, mr = 44, mt = 4;
+    var H = mt + rows.length * rowH + 22, top = opts.max;
+    var x = function (v) { return ml + (W - ml - mr) * v / top; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": opts.label });
+    var axisY = mt + rows.length * rowH;
+    opts.ticks.forEach(function (t) {
+      el("line", { x1: x(t), x2: x(t), y1: mt, y2: axisY, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, x(t), axisY + 16, opts.tickFmt(t), { "text-anchor": "middle" });
+    });
+    if (opts.ref !== undefined) {
+      el("line", { x1: x(opts.ref), x2: x(opts.ref), y1: mt - 2, y2: axisY, stroke: "var(--truth)", "stroke-width": 2 }, svg);
+    }
+    rows.forEach(function (r, i) {
+      var y0 = mt + i * rowH, bh = 14;
+      txt(svg, ml - 8, y0 + rowH / 2 + 4, r.name, { "text-anchor": "end", class: r.strong ? "strong" : "" });
+      el("path", { d: roundRight(x(0), y0 + (rowH - bh) / 2, Math.max(1, x(Math.min(r.value, top)) - x(0)), bh, 4), fill: r.color }, svg);
+      txt(svg, x(Math.min(r.value, top)) + 6, y0 + rowH / 2 + 4, opts.valFmt(r.value), {});
+      var hit = el("rect", { x: 0, y: y0, width: W, height: rowH, fill: "transparent" }, svg);
+      attachTip(hit, chart, function () { return [r.tipTitle || r.name, r.tip]; });
+    });
+    return svg;
+  }
+
+  function renderErr(m) {
+    var chart = $("chart-err"); clearSvg(chart);
+    legend("legend-err", METHODS.map(function (x) { return { name: x.name, color: x.color }; }).concat([{ name: "95% target", color: "var(--truth)", cls: "tick" }]));
+    var maxR = 0; METHODS.forEach(function (x) { maxR = Math.max(maxR, m[x.key].rmse); });
+    var tk = ticks(maxR * 1.1, 4);
+    var tipFor = function (x) {
+      var o = m[x.key];
+      return [{ label: "RMSE", value: fmt(o.rmse, 3) }, { label: "Bias", value: fmt(o.bias, 3) }, { label: "Coverage", value: pct(o.cov) }];
+    };
+    var a = hbars(chart, METHODS.map(function (x) { return { name: x.name, value: m[x.key].rmse, color: x.color, tip: tipFor(x) }; }),
+      { max: tk[tk.length - 1], ticks: tk, tickFmt: function (t) { return t.toFixed(2); }, valFmt: function (v) { return v.toFixed(3); }, label: "RMSE of the estimated mean" });
+    var b = hbars(chart, METHODS.map(function (x) { return { name: x.name, value: m[x.key].cov, color: x.color, tip: tipFor(x) }; }),
+      { max: 1, ticks: [0, 0.25, 0.5, 0.75, 1], ref: 0.95, tickFmt: function (t) { return Math.round(t * 100) + "%"; }, valFmt: pct, label: "95% interval coverage" });
+    var cap = function (s) { var p = document.createElement("p"); p.className = "sub"; p.style.margin = "0 0 .25rem"; p.style.fontWeight = "600"; p.textContent = s; return p; };
+    chart.querySelectorAll("p.sub, svg").forEach(function (n) { n.remove(); });
+    var tip = chart.querySelector(".tip");
+    chart.insertBefore(cap("RMSE"), tip); chart.insertBefore(a, tip);
+    var c2 = cap("Coverage"); c2.style.marginTop = "1rem";
+    chart.insertBefore(c2, tip); chart.insertBefore(b, tip);
+  }
+
+  function renderIncl() {
+    var chart = $("chart-incl"); clearSvg(chart);
+    legend("legend-incl", [{ name: "Inclusion probability", color: "var(--s-mibma)" }]);
+    var k = acc.q.k, p = acc.q.p, n = acc.outs.length, avg = [];
+    for (var j = 0; j < p; j++) avg[j] = acc.outs.reduce(function (s, o) { return s + o.incl[j]; }, 0) / n;
+    var models = acc.outs.reduce(function (s, o) { return s + o.nModels; }, 0) / n;
+    var svg = hbars(chart, avg.map(function (v, j) {
+      var truly = j < k;
+      return { name: "X" + (j + 1) + (truly ? " • affects Y" : ""), strong: truly, value: v, color: "var(--s-mibma)",
+        tipTitle: "X" + (j + 1) + (truly ? " (affects Y)" : " (noise)"), tip: [{ label: "Inclusion probability", value: pct(v) }] };
+    }), { ml: 116, max: 1, ticks: [0, 0.25, 0.5, 0.75, 1], tickFmt: function (t) { return Math.round(t * 100) + "%"; }, valFmt: pct, label: "Posterior inclusion probability by predictor" });
+    chart.insertBefore(svg, chart.firstChild);
+    var note = chart.querySelector("p.sub"); if (note) note.remove();
+    var pn = document.createElement("p"); pn.className = "sub"; pn.style.marginTop = ".5rem";
+    pn.textContent = "On average " + models.toFixed(0) + " models fall inside Occam's window. Bold rows are the predictors that actually affect Y.";
+    chart.insertBefore(pn, chart.querySelector(".tip"));
+  }
+
+  function renderScatter() {
+    var chart = $("chart-scatter"); clearSvg(chart);
+    if (!first) return;
+    var key = $("scatter-method").value, meth = METHODS.filter(function (m) { return m.key === key; })[0];
+    legend("legend-scatter", [
+      { name: "Observed", color: "var(--s-obs)", cls: "dot" },
+      { name: "True value (went missing)", color: "var(--truth)", cls: "dot" },
+      { name: "Imputed by " + meth.name, color: meth.color, cls: "dot" }
+    ]);
+    var data = first.data, imp = first[key].example, miss = first.missIdx;
+    var pts = data.map(function (d) { return { x: d.x1, y: d.y, kind: d.miss ? "true" : "obs" }; });
+    miss.forEach(function (i, j) { pts.push({ x: data[i].x1, y: imp[j], kind: "imp", truth: data[i].y }); });
+    var W = Math.max(300, chart.clientWidth), H = 320, ml = 40, mr = 12, mt = 8, mb = 30;
+    var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    var px = (x1 - x0) * 0.04, py = (y1 - y0) * 0.04; x0 -= px; x1 += px; y0 -= py; y1 += py;
+    var X = function (v) { return ml + (W - ml - mr) * (v - x0) / (x1 - x0); }, Y = function (v) { return mt + (H - mt - mb) * (1 - (v - y0) / (y1 - y0)); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "Y against X1 with imputed values" });
+    for (var t = Math.ceil(y0); t <= y1; t++) { el("line", { x1: ml, x2: W - mr, y1: Y(t), y2: Y(t), stroke: "var(--grid)", "stroke-width": 1 }, svg); txt(svg, ml - 6, Y(t) + 4, String(t), { "text-anchor": "end" }); }
+    for (t = Math.ceil(x0); t <= x1; t++) { el("line", { x1: X(t), x2: X(t), y1: mt, y2: H - mb, stroke: "var(--grid)", "stroke-width": 1 }, svg); txt(svg, X(t), H - mb + 16, String(t), { "text-anchor": "middle" }); }
+    txt(svg, W - mr, H - 4, "X1", { "text-anchor": "end", class: "axis-label" });
+    txt(svg, ml - 6, mt + 2, "Y", { "text-anchor": "end", class: "axis-label" });
+    pts.filter(function (p) { return p.kind === "obs"; }).forEach(function (p) { el("circle", { cx: X(p.x), cy: Y(p.y), r: 3.5, fill: "var(--s-obs)" }, svg); });
+    pts.filter(function (p) { return p.kind === "true"; }).forEach(function (p) { el("circle", { cx: X(p.x), cy: Y(p.y), r: 4, fill: "none", stroke: "var(--truth)", "stroke-width": 1.5 }, svg); });
+    pts.filter(function (p) { return p.kind === "imp"; }).forEach(function (p) { el("circle", { cx: X(p.x), cy: Y(p.y), r: 4, fill: meth.color, stroke: "var(--bg)", "stroke-width": 1.5 }, svg); });
+    // Nearest-point hover layer
+    var hit = el("rect", { x: ml, y: mt, width: W - ml - mr, height: H - mt - mb, fill: "transparent" }, svg);
+    var ring = el("circle", { r: 7, fill: "none", stroke: "var(--text)", "stroke-width": 1.5, visibility: "hidden" }, svg);
+    hit.addEventListener("pointermove", function (e) {
+      var r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) * W / r.width, sy = (e.clientY - r.top) * H / r.height;
+      var best = null, bd = 400;
+      pts.forEach(function (p) { var d = Math.pow(X(p.x) - sx, 2) + Math.pow(Y(p.y) - sy, 2); if (d < bd) { bd = d; best = p; } });
+      if (!best) { ring.setAttribute("visibility", "hidden"); D.hideTip(chart); return; }
+      ring.setAttribute("cx", X(best.x)); ring.setAttribute("cy", Y(best.y)); ring.setAttribute("visibility", "visible");
+      var label = best.kind === "obs" ? "Observed" : best.kind === "true" ? "True value (missing in the data)" : "Imputed by " + meth.name;
+      var rows = [{ label: "X1", value: fmt(best.x, 2) }, { label: "Y", value: fmt(best.y, 2) }];
+      if (best.kind === "imp") rows.push({ label: "True Y", value: fmt(best.truth, 2) });
+      D.showTip(chart, e, label, rows);
+    });
+    hit.addEventListener("pointerleave", function () { ring.setAttribute("visibility", "hidden"); D.hideTip(chart); });
+    chart.insertBefore(svg, chart.firstChild);
+    $("scatter-sub").textContent = "Y against X1 for the first replication (" + data.length + " rows, " + miss.length + " missing). Hollow circles are the true values that went missing; colored points are one of the 20 imputations.";
+  }
+
+  // ---------- Scenarios ----------
+  var PRESETS = {
+    small: { n: 60, miss: 50, mech: "mar", p: 12, k: 2, rho: 0.5, r2: 0.3 },
+    example: { n: 100, miss: 40, mech: "mar", p: 10, k: 3, rho: 0.2, r2: 0.4 },
+    large: { n: 300, miss: 30, mech: "mar", p: 10, k: 3, rho: 0.2, r2: 0.6 }
+  };
+  var chips = Array.prototype.slice.call(document.querySelectorAll(".chip"));
+  function markPreset(name) { chips.forEach(function (c) { c.setAttribute("aria-pressed", c.dataset.preset === name ? "true" : "false"); }); }
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      var pr = PRESETS[c.dataset.preset];
+      $("p").value = pr.p; syncOutputs();
+      Object.keys(pr).forEach(function (key) { $(key).value = pr[key]; });
+      markPreset(c.dataset.preset); schedule();
+    });
+  });
+
+  // ---------- Wire up ----------
+  sliders.forEach(function (id) { $(id).addEventListener("input", function () { markPreset(null); schedule(); }); });
+  $("mech").addEventListener("change", function () { markPreset(null); schedule(); });
+  $("rerun").addEventListener("click", function () { seed += 104729; start(); });
+  $("scatter-method").addEventListener("change", renderScatter);
+  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (acc && acc.reps) render(); }, 150); });
+  syncOutputs();
+  start();
+})();
+</script>

@@ -3,112 +3,17 @@ layout: default
 title: SABDB
 description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), a Bayesian model for subgroup achievement estimation, compared with HBSAE and direct estimates.
 ---
+<link rel="stylesheet" href="{{ '/assets/css/demo.css' | relative_url }}">
 <style>
-  /* Layout: intro + method key, one control row, then summary -> charts -> notes. */
-  :root {
-    --s-sabdb: #2a78d6;
-    --s-hbsae: #eb6834;
-    --s-direct: #1baf7a;
-    --truth: #1c1f24;
-    --grid: #e9ebee;
-    --warn: #b45309;
-    --warn-soft: #fdf3e2;
-  }
+  /* Series colors for this demo; shared demo styles live in /assets/css/demo.css. */
+  :root { --s-sabdb: #2a78d6; --s-hbsae: #eb6834; --s-direct: #1baf7a; }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70;
-      --truth: #e7e9ee; --grid: #232833; --warn: #f0a33a; --warn-soft: #2e2416;
-    }
+    :root:not([data-theme="light"]) { --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70; }
   }
-  :root[data-theme="dark"] {
-    --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70;
-    --truth: #e7e9ee; --grid: #232833; --warn: #f0a33a; --warn-soft: #2e2416;
-  }
-
-  .sb-head { padding: 3rem 0 1.5rem; }
-  .sb-head h1 { text-wrap: balance; }
-  .sb-head .lead { max-width: 68ch; }
-  .sb-links { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
-
-  .paper { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.5rem; max-width: 78ch; }
-  .paper p { margin: 0; }
-  .paper-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
-  .paper-title { font-weight: 600; font-size: 1.05rem; margin-top: .3rem !important; text-wrap: balance; }
-  .paper-title a { color: var(--text); }
-  .paper-meta { color: var(--muted); font-size: .88rem; margin-top: .2rem !important; }
-  .paper-abs { color: var(--muted); font-size: .92rem; margin-top: .6rem !important; }
-  .methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 1rem 0 2rem; }
-  .method { border-top: 3px solid var(--c); padding-top: .75rem; }
-  .method h3 { font-size: 1rem; display: flex; align-items: baseline; gap: .5rem; }
-  .method h3 small { color: var(--muted); font-weight: 400; font-size: .85rem; }
-  .method p { color: var(--muted); font-size: .92rem; margin: .35rem 0 0; }
-
-  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-  .ctl label { display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; font-weight: 600; }
-  .ctl output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
-  .ctl p { margin: .2rem 0 0; color: var(--muted); font-size: .8rem; line-height: 1.4; }
-  .ctl input[type=range] { width: 100%; accent-color: var(--accent); margin: .4rem 0 0; }
-  .ctl select { width: 100%; margin-top: .4rem; font: inherit; font-size: .9rem; padding: .35rem .5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-  .run-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-  .status { color: var(--muted); font-size: .88rem; font-variant-numeric: tabular-nums; }
-  .bar-progress { flex: 1; min-width: 120px; height: 4px; background: var(--grid); border-radius: 2px; overflow: hidden; }
-  .bar-progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .15s; }
-
-  .results { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; padding: 2rem 0 1rem; transition: opacity .2s; }
-  .results.busy { opacity: .55; }
-  .results h2 { margin-bottom: .25rem; }
-  .sub { color: var(--muted); font-size: .92rem; margin: 0 0 1rem; max-width: 70ch; }
-
-  .callout { background: var(--accent-soft); border-radius: var(--radius); padding: 1rem 1.25rem; font-size: 1rem; }
-  .callout b { font-variant-numeric: tabular-nums; }
-
-  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
-  .sb-table { width: 100%; border-collapse: collapse; font-size: .92rem; font-variant-numeric: tabular-nums; }
-  .sb-table th, .sb-table td { padding: .6rem .9rem; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  .sb-table th { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
-  .sb-table th:first-child, .sb-table td:first-child { text-align: left; }
-  .sb-table tr:last-child td { border-bottom: 0; }
-  .key { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; margin-right: .5rem; }
-  .pill-warn { display: inline-flex; align-items: center; gap: .3rem; font-size: .75rem; font-weight: 600; color: var(--warn); background: var(--warn-soft); padding: .1rem .5rem; border-radius: 999px; margin-left: .4rem; }
-
-  .chart { position: relative; }
-  .chart svg { display: block; width: 100%; overflow: visible; }
-  .chart text { font-family: var(--font); fill: var(--muted); font-size: 12px; }
-  .chart .axis-label { fill: var(--muted); font-size: 11px; }
-  .chart .strong { fill: var(--text); font-weight: 600; }
-  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .85rem; color: var(--muted); margin-bottom: .5rem; }
-  .legend span { display: inline-flex; align-items: center; gap: .4rem; }
-  .legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--c); display: inline-block; }
-  .legend i.tick { width: 2px; height: 14px; border-radius: 0; }
-  .legend i.dot { width: 9px; height: 9px; border-radius: 50%; }
-  .two-col { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 2.5rem; }
-  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: .5rem 1rem; }
-  .chart-head select { font: inherit; font-size: .9rem; padding: .3rem .5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-
-  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .5rem .7rem; font-size: .82rem; box-shadow: 0 6px 20px rgb(0 0 0 / .12); min-width: 180px; z-index: 5; font-variant-numeric: tabular-nums; }
-  .tip[hidden] { display: none; }
-  .tip .t-title { color: var(--muted); margin-bottom: .3rem; }
-  .tip .t-row { display: flex; align-items: center; gap: .5rem; justify-content: space-between; }
-  .tip .t-row b { color: var(--text); }
-  .tip .t-row span { color: var(--muted); }
-  .tip .t-row i { width: 12px; height: 2px; background: var(--c); display: inline-block; }
-
-  details.more { margin-top: .75rem; font-size: .9rem; }
-  details.more summary { cursor: pointer; color: var(--accent); }
-  details.more .table-wrap { margin-top: .75rem; }
-  .notes { border-top: 1px solid var(--border); padding: 2rem 0 3rem; }
-  .notes .prose { max-width: 70ch; color: var(--muted); font-size: .95rem; }
-  .notes h2 { color: var(--text); }
-  .cite { font-family: var(--mono); font-size: .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; overflow-x: auto; white-space: pre; color: var(--text); }
-  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  @media (max-width: 760px) {
-    .methods, .two-col { grid-template-columns: 1fr; }
-  }
-  @media (prefers-reduced-motion: reduce) { .results, .bar-progress span { transition: none; } }
+  :root[data-theme="dark"] { --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70; }
 </style>
 
-<header class="sb-head">
+<header class="demo-head">
   <p class="eyebrow">Dissertation research · University of Wisconsin–Madison, 2026</p>
   <h1>SABDB: Small Area Bayesian Dynamic Borrowing</h1>
   <p class="lead">
@@ -118,7 +23,7 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
     states are alike. Move the sliders to change how the states differ and see how SABDB compares with
     standard approaches.
   </p>
-  <p class="sb-links">
+  <p class="demo-links">
     <a class="btn" href="#playground">Try the simulation</a>
     <a class="btn btn-ghost" href="https://arxiv.org/abs/2608.07708">Read the paper</a>
     <a class="btn btn-ghost" href="https://github.com/Sinan-Yavuz/SABDB">Code on GitHub</a>
@@ -199,7 +104,7 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
       <h2>How accurate is each method?</h2>
       <p class="sub" id="summary-sub">Averaged over every state and subgroup cell, across all replications.</p>
       <div class="table-wrap">
-        <table class="sb-table" id="summary">
+        <table class="data-table" id="summary">
           <thead><tr><th>Method</th><th>RMSE (points)</th><th>Bias</th><th>95% interval coverage</th><th>Avg interval width</th></tr></thead>
           <tbody></tbody>
         </table>
@@ -214,7 +119,7 @@ description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), 
         <div class="chart" id="chart-rmse"><div class="tip" hidden></div></div>
         <details class="more">
           <summary>Show as a table</summary>
-          <div class="table-wrap"><table class="sb-table" id="rmse-table"></table></div>
+          <div class="table-wrap"><table class="data-table" id="rmse-table"></table></div>
         </details>
       </div>
       <div>
@@ -268,6 +173,7 @@ Small Area Bayesian Dynamic Borrowing Model [Doctoral dissertation,
 University of Wisconsin–Madison].</div>
 </section>
 
+<script src="{{ '/assets/js/demo-charts.js' | relative_url }}"></script>
 <script src="sabdb-sim.js"></script>
 <script>
 (function () {
@@ -279,19 +185,8 @@ University of Wisconsin–Madison].</div>
   ];
   var REPS = 12;
   var $ = function (id) { return document.getElementById(id); };
-  var NS = "http://www.w3.org/2000/svg";
-  function el(tag, attrs, parent) {
-    var e = document.createElementNS(NS, tag);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-  function txt(parent, x, y, s, attrs) {
-    var t = el("text", Object.assign({ x: x, y: y }, attrs || {}), parent);
-    t.textContent = s; return t;
-  }
-  function fmt(x, d) { return isFinite(x) ? x.toFixed(d === undefined ? 1 : d) : "–"; }
-  function pct(x) { return isFinite(x) ? Math.round(x * 100) + "%" : "–"; }
+  var D = DemoCharts, el = D.el, txt = D.txt, fmt = D.fmt, pct = D.pct, legend = D.legend, niceMax = D.niceMax,
+    ticks = D.ticks, roundTop = D.roundTop, roundRight = D.roundRight, attachTip = D.attachTip, clearSvg = D.clearSvg;
 
   // ---------- Controls ----------
   var ids = ["gapSD", "levelSD", "n", "states"];
@@ -415,55 +310,6 @@ University of Wisconsin–Madison].</div>
     $("summary-sub").textContent = "Across " + acc.reps + " replications × " + acc.p.states + " states × 4 subgroups. " +
       (missing ? missing + " of " + total + " cells had fewer than 2 sampled students, so direct estimation couldn't produce an estimate; those are left out here so all three methods are compared on the same cells." : "");
   }
-
-  function legend(id, items) {
-    var box = $(id); box.textContent = "";
-    items.forEach(function (it) {
-      var s = document.createElement("span"), i = document.createElement("i");
-      if (it.cls) i.className = it.cls;
-      i.style.setProperty("--c", it.color); s.appendChild(i); s.appendChild(document.createTextNode(it.name)); box.appendChild(s);
-    });
-  }
-  function niceMax(v) { var p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
-  function ticks(max, n) { var step = niceMax(max / n), out = []; for (var t = 0; t <= max + 1e-9; t += step) out.push(+t.toFixed(6)); return out; }
-  function roundTop(x, y, w, h, r) {
-    r = Math.min(r, w / 2, h);
-    return "M" + x + "," + (y + h) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y + "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + "V" + (y + h) + "Z";
-  }
-  function roundRight(x, y, w, h, r) {
-    r = Math.min(r, h / 2, w);
-    return "M" + x + "," + y + "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + "V" + (y + h - r) + "Q" + (x + w) + "," + (y + h) + " " + (x + w - r) + "," + (y + h) + "H" + x + "Z";
-  }
-  function tipRows(tip, title, rows) {
-    tip.textContent = "";
-    var t = document.createElement("div"); t.className = "t-title"; t.textContent = title; tip.appendChild(t);
-    rows.forEach(function (r) {
-      var row = document.createElement("div"); row.className = "t-row";
-      var left = document.createElement("span");
-      if (r.color) { var i = document.createElement("i"); i.style.setProperty("--c", r.color); left.appendChild(i); left.appendChild(document.createTextNode(" ")); }
-      left.appendChild(document.createTextNode(r.label));
-      var b = document.createElement("b"); b.textContent = r.value;
-      row.appendChild(left); row.appendChild(b); tip.appendChild(row);
-    });
-  }
-  function showTip(chart, evt, title, rows) {
-    var tip = chart.querySelector(".tip"); tipRows(tip, title, rows); tip.hidden = false;
-    var box = chart.getBoundingClientRect(), x = evt.clientX - box.left + 14, y = evt.clientY - box.top + 14;
-    if (x + tip.offsetWidth > box.width) x = Math.max(0, evt.clientX - box.left - tip.offsetWidth - 14);
-    tip.style.left = x + "px"; tip.style.top = y + "px";
-  }
-  function hideTip(chart) { chart.querySelector(".tip").hidden = true; }
-  function attachTip(node, chart, fn) {
-    node.setAttribute("tabindex", "0");
-    node.addEventListener("pointermove", function (e) { var t = fn(); showTip(chart, e, t[0], t[1]); });
-    node.addEventListener("pointerleave", function () { hideTip(chart); });
-    node.addEventListener("focus", function () {
-      var r = node.getBoundingClientRect(); var t = fn();
-      showTip(chart, { clientX: r.left + r.width / 2, clientY: r.top }, t[0], t[1]);
-    });
-    node.addEventListener("blur", function () { hideTip(chart); });
-  }
-  function clearSvg(chart) { var old = chart.querySelector("svg"); if (old) old.remove(); }
 
   function renderRmse() {
     var chart = $("chart-rmse"); clearSvg(chart);
