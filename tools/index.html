@@ -3,9 +3,13 @@ layout: page
 title: Tools
 intro: Small, free tools that run in your browser. Your data never leaves your device.
 ---
+{% assign tools = site.data.projects | where: "type", "tool" %}
+{% if tools.size > 0 %}
 <div class="grid">
-  {% assign tools = site.data.projects | where: "type", "tool" %}
   {% for project in tools %}
     {% include project-card.html project=project %}
   {% endfor %}
 </div>
+{% else %}
+<p>The first tools are on the way. Meanwhile, see <a href="{{ '/projects/' | relative_url }}">projects</a>.</p>
+{% endif %}

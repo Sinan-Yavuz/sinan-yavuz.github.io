@@ -3,7 +3,10 @@
     <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
     <nav aria-label="Main">
       <a href="{{ '/projects/' | relative_url }}" {% if page.url contains '/projects' %}aria-current="page"{% endif %}>Projects</a>
+      {% assign tools = site.data.projects | where: "type", "tool" %}
+      {% if tools.size > 0 %}
       <a href="{{ '/tools/' | relative_url }}" {% if page.url contains '/tools' %}aria-current="page"{% endif %}>Tools</a>
+      {% endif %}
       {% if site.posts.size > 0 %}
       <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog' %}aria-current="page"{% endif %}>Blog</a>
       {% endif %}

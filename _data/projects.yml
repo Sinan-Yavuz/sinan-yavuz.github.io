@@ -13,18 +13,19 @@
 #   repo:       optional source-code URL
 # ---------------------------------------------------------------
 
-- name: Reliability Calculator
+- name: "SABDB: Small Area Bayesian Dynamic Borrowing"
   summary: >-
-    Paste item scores and instantly get Cronbach's alpha, item-total
-    correlations, and alpha-if-item-deleted. Runs entirely in your browser,
-    so no data ever leaves your machine.
-  type: tool
+    My dissertation model for estimating subgroup achievement in large-scale
+    assessments like NAEP and PISA. It borrows strength across states only as
+    much as the data support. Includes an interactive simulation that compares
+    it with standard hierarchical models.
+  type: project
   featured: true
-  status: Live
-  tags: [Psychometrics, JavaScript, Statistics]
-  link: /tools/reliability/
-  link_label: Try it
-  repo: https://github.com/Sinan-Yavuz/sinanyavuz.github.io/tree/main/tools/reliability
+  status: Dissertation · 2026
+  tags: [Bayesian statistics, Stan, R, Small area estimation, NAEP, PISA]
+  link: /projects/sabdb/
+  link_label: Interactive demo
+  repo: https://github.com/Sinan-Yavuz/SABDB
 
 # --- Template: copy, uncomment and fill in -----------------------
 # - name: My Project

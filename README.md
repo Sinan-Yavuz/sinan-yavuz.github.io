@@ -12,10 +12,10 @@ There's no build step and no dependencies to manage.
 | Change the intro / About   | `index.html`                                            |
 | Add a project              | Add an entry to `_data/projects.yml`                    |
 | Add a browser tool         | Create `tools/<name>/index.html` + entry with `type: tool` |
-| Write a blog post          | Add `_posts/YYYY-MM-DD-title.md` (see `_drafts/` for an example) |
+| Write a blog post          | Add `_posts/YYYY-MM-DD-title.md` (template below)       |
 | Add a CV                   | Put the PDF in `assets/`, set `author.resume` in `_config.yml` |
 
-The **Blog** nav link appears automatically once the first post exists.
+The **Blog** and **Tools** nav links appear automatically once the first post or tool exists.
 
 ### Blog post template
 
