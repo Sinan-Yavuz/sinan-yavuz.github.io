@@ -1,4 +1,4 @@
-# sinanyavuz.github.io
+# sinan-yavuz.github.io
 
 Personal site: projects, browser tools, and (soon) a blog. Built with
 [Jekyll](https://jekyllrb.com/), which GitHub Pages builds automatically on every push.
