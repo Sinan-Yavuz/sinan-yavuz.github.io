@@ -42,15 +42,15 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
     A quadratic growth model of math achievement from kindergarten to grade 5 (nine time points; 2,181
     students in 165 schools), with motivation and attention as time-varying covariates, gender, ethnicity,
     school starting age and SES at the student level, and school type and free-lunch share at the school
-    level. Both methods gave similar results; Bayesian estimation gave slightly lower prediction error in
-    the full sample and in a 15-school subsample.
+    level. Both methods gave similar results. Bayesian estimation had slightly lower prediction error in
+    the full sample and in a 15-school subsample, though the differences were in the second or third decimal place.
   </p>
 </aside>
 
 <div class="methods">
   <div class="method" style="--c: var(--s-ml)">
     <h3>Maximum likelihood <small>standard practice</small></h3>
-    <p>Uses only the current data. Unbiased, but with few schools its estimates swing widely from sample to sample.</p>
+    <p>Uses only the current data. Close to unbiased, but with few schools its estimates swing widely from sample to sample.</p>
   </div>
   <div class="method" style="--c: var(--s-flat)">
     <h3>Bayes, flat priors <small>no prior information</small></h3>
@@ -58,7 +58,7 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
   </div>
   <div class="method" style="--c: var(--s-inf)">
     <h3>Bayes, informative priors <small>this research</small></h3>
-    <p>Priors centered on what an earlier cohort showed, using the thesis's prior SDs from ECLS-K 1998. Optionally inflated for safety.</p>
+    <p>Priors taken from an earlier cohort's estimates, with the thesis's prior SDs from ECLS-K 1998. Their variance can be inflated for safety.</p>
   </div>
 </div>
 
@@ -84,12 +84,12 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
     <div class="ctl">
       <label for="drift">How far off the prior is <output id="drift-out"></output></label>
       <input type="range" id="drift" min="0" max="3" step="0.25" value="0">
-      <p>Shift of every prior mean from the truth, in prior SDs. 0 means the earlier cohort matches this one.</p>
+      <p>Systematic shift of every prior mean, in prior SDs. At 0 the earlier cohort matches this one, apart from its own sampling error.</p>
     </div>
     <div class="ctl">
       <label for="inflate">Prior variance multiplier <output id="inflate-out"></output></label>
       <input type="range" id="inflate" min="1" max="20" step="1" value="1">
-      <p>The thesis multiplied the variance of its time-related priors by 10, since the cohorts were tested at different time points.</p>
+      <p>Applied to every prior here. The thesis multiplied only its time-related priors' variance by 10, since the cohorts were tested at different time points.</p>
     </div>
     <div class="run-row">
       <button class="btn" type="button" id="rerun">Draw new samples</button>
@@ -133,7 +133,7 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
       <div class="chart-head">
         <div>
           <h2>Estimates across samples</h2>
-          <p class="sub">Each dot is one replication's estimate. The vertical line is the true value; the diamond is the informative prior's mean.</p>
+          <p class="sub">Each dot is one replication's estimate. The vertical line is the true value; the diamond is where the informative prior is centered on average.</p>
         </div>
         <label>Effect
           <select id="param-select"></select>
@@ -181,15 +181,20 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
         <tr><td></td><td>15 schools</td><td>−5.93 [−13.52, 1.65]</td><td>−5.97 [−15.95, 3.67]</td><td>−1.27 [−3.20, 0.78]</td></tr>
         <tr><td>Male × growth</td><td>Full</td><td>0.94 [0.74, 1.13]</td><td>0.94 [0.74, 1.13]</td><td>0.92 [0.73, 1.12]</td></tr>
         <tr><td></td><td>15 schools</td><td>0.81 [0.16, 1.47]</td><td>0.82 [0.13, 1.47]</td><td>0.92 [0.38, 1.46]</td></tr>
-        <tr><td>Prediction RMSE</td><td>Full</td><td>5.684</td><td>5.684</td><td>5.683</td></tr>
+        <tr><td>Prediction RMSE*</td><td>Full</td><td>5.677</td><td>5.672</td><td>5.673</td></tr>
+        <tr><td></td><td>15 schools</td><td>5.669</td><td>5.649</td><td>5.665</td></tr>
       </tbody>
     </table>
   </div>
   <div class="prose">
     <p>
+      *From thesis Tables 16 and 19, where this row is labeled as mean absolute error. Because RMSE can't
+      be smaller than MAE, the two rows there appear to be swapped.
+    </p>
+    <p>
       Substantively, math scores grow fast early and slow down later. Motivation, attention, later school
-      entry and higher SES all predict higher scores. Boys and girls start level, but boys grow faster at
-      first and plateau sooner. Black and Hispanic students start lower and grow more slowly early on.
+      entry and higher SES all predict higher scores. Boys and girls start at about the same level, but boys grow faster at
+      first and plateau sooner. Black and Hispanic students start lower than Asian and White students and grow more slowly early on, and their growth levels off later.
       School type affects only the curvature of growth.
     </p>
   </div>
@@ -200,7 +205,16 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
       Each replication simulates students in schools from the thesis's model, measured at kindergarten fall and spring,
       grade 1 and 2 fall and spring, and grades 3–5 spring (time points 0–5, 7, 9, 11). True effects and
       variance components come from the thesis's full-sample estimates; prior SDs come from its ECLS-K 1998
-      priors. Covariates are simplified to gender, SES and public vs. private school.
+      priors. Covariates are simplified to gender, SES (standardized) and public vs. private school
+      (93% public, as in the thesis sample). The school-level variance of growth rates isn't reported in the
+      thesis, so the demo assumes a small value (0.10). Time is counted in half-years from kindergarten fall,
+      so "growth rate at K entry" is the linear term of the quadratic, not the average growth over the years.
+    </p>
+    <p>
+      In each replication the informative prior is centered on a fresh draw around the truth, with the prior
+      SD as its spread, the way an estimate from an earlier cohort would vary. The drift slider adds a
+      systematic shift on top. A prior centered exactly on the truth would make informative priors look
+      better than they could be in practice.
     </p>
     <p>
       To run in your browser, estimation is two-stage: a growth curve per student, then a GLS regression of
@@ -402,8 +416,8 @@ estimations] (Doctoral dissertation). Hacettepe University, Ankara.</div>
     var chart = $("chart-strip"); clearSvg(chart);
     var key = $("param-select").value, P = PARAMS.filter(function (p) { return p.key === key; })[0];
     legend("legend-strip", METHODS.map(function (x) { return { name: x.name, color: x.color, cls: "dot" }; }).concat([
-      { name: "True value", color: "var(--truth)", cls: "tick" }, { name: "Prior mean", color: "var(--truth)" }]));
-    var truth = GrowthSim.TRUTH[P.k][P.c], prior = acc.outs[0].params[key].prior;
+      { name: "True value", color: "var(--truth)", cls: "tick" }, { name: "Prior center (average)", color: "var(--truth)" }]));
+    var truth = GrowthSim.TRUTH[P.k][P.c], prior = acc.outs[0].params[key].priorCenter;
     var all = [truth, prior];
     acc.outs.forEach(function (r) { METHODS.forEach(function (m) { all.push(r.params[key][m.key].est); }); });
     all.sort(function (a, b) { return a - b; });

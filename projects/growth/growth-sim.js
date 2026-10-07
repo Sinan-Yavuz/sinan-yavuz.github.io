@@ -11,6 +11,8 @@
 //   2. for each growth coefficient, GLS on the student covariates with a school random effect
 //      (variance components by method of moments).
 // The Bayesian estimates combine that normal likelihood with normal priors (conjugate update).
+// Each replication's prior mean is a fresh draw, as if re-estimated from an earlier cohort:
+// truth + drift * SD + N(0, SD^2), so a prior with drift 0 is right on average, not exactly right.
 
 var GrowthSim = (function () {
   var TIMES = [0, 1, 2, 3, 4, 5, 7, 9, 11];
@@ -28,17 +30,19 @@ var GrowthSim = (function () {
     [1.83, 0.22, 0.16, 0.27],
     [0.15, 0.02, 0.01, 0.02]
   ];
+  // Thesis Table 15 (ML). The school slope variance isn't reported there, so 0.10 is an assumption.
   var VC = { sigma2: 39.23, tauStuInt: 93.01, tauStuSlope: 0.87, corStu: 0.08, tauSchInt: 6.42, tauSchSlope: 0.10 };
+  var PUBLIC_SHARE = 153 / 165;   // thesis Table 4
 
   // Parameters reported in the demo: [equation, column, label]
   var PARAMS = [
-    { k: 1, c: 0, key: "t", name: "Average growth per period" },
+    { k: 1, c: 0, key: "t", name: "Growth rate at K entry" },
     { k: 0, c: 2, key: "ses0", name: "SES → starting score" },
-    { k: 1, c: 2, key: "ses1", name: "SES → growth rate" },
+    { k: 1, c: 2, key: "ses1", name: "SES → initial growth rate" },
     { k: 0, c: 1, key: "male0", name: "Male → starting score" },
-    { k: 1, c: 1, key: "male1", name: "Male → growth rate" },
+    { k: 1, c: 1, key: "male1", name: "Male → initial growth rate" },
     { k: 0, c: 3, key: "pub0", name: "Public school → starting score" },
-    { k: 1, c: 3, key: "pub1", name: "Public school → growth rate" }
+    { k: 1, c: 3, key: "pub1", name: "Public school → initial growth rate" }
   ];
 
   function rng(seed) {
@@ -94,7 +98,7 @@ var GrowthSim = (function () {
   })();
 
   function simulate(q, r) {
-    var J = q.schools, nj = q.perSchool, nPub = Math.min(J - 1, Math.max(1, Math.round(0.85 * J)));
+    var J = q.schools, nj = q.perSchool, nPub = Math.min(J - 1, Math.max(1, Math.round(PUBLIC_SHARE * J)));
     var sd = Math.sqrt, students = [];
     var sI = sd(VC.tauStuInt), sS = sd(VC.tauStuSlope), rho = VC.corStu;
     for (var j = 0; j < J; j++) {
@@ -159,14 +163,14 @@ var GrowthSim = (function () {
       var V = inverse(L.A, 4), ml = matvec(V, L.B, 4);
       est.ml.push({ mean: ml, sd: [0, 1, 2, 3].map(function (a) { return Math.sqrt(V[a * 4 + a]); }) });
       est.flat.push(posterior(L, [0, 0, 0, 0], [1e4, 1e4, 1e4, 1e4]));
-      var pm = TRUTH[k].map(function (v, c) { return v + q.drift * PRIOR_SD[k][c]; });
+      var pm = TRUTH[k].map(function (v, c) { return v + (q.drift + r.normal()) * PRIOR_SD[k][c]; });
       var ps = PRIOR_SD[k].map(function (s) { return s * sdMul; });
       est.inf.push(posterior(L, pm, ps));
       prior.push({ mean: pm, sd: ps });
     }
     var out = { params: {} };
     PARAMS.forEach(function (P) {
-      var row = { truth: TRUTH[P.k][P.c], prior: prior[P.k].mean[P.c] };
+      var row = { truth: TRUTH[P.k][P.c], prior: prior[P.k].mean[P.c], priorCenter: TRUTH[P.k][P.c] + q.drift * PRIOR_SD[P.k][P.c] };
       ["ml", "flat", "inf"].forEach(function (m) {
         var e = est[m][P.k], mu = e.mean[P.c], s = e.sd[P.c];
         row[m] = { est: mu, lo: mu - 1.96 * s, hi: mu + 1.96 * s };
@@ -175,7 +179,7 @@ var GrowthSim = (function () {
     });
     if (opt.keepData) {
       // Mean curves for low (-1 SD) and high (+1 SD) SES, averaged over gender and school type.
-      var nPub = Math.min(d.J - 1, Math.max(1, Math.round(0.85 * d.J))), pubShare = nPub / d.J;
+      var nPub = Math.min(d.J - 1, Math.max(1, Math.round(PUBLIC_SHARE * d.J))), pubShare = nPub / d.J;
       var curve = function (coefs, ses) {
         return TIMES.map(function (t) {
           var v = 0;
