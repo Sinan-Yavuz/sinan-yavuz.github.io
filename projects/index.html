@@ -1,0 +1,10 @@
+---
+layout: page
+title: Projects
+intro: Things I've built, analyzed, or written, from research to weekend experiments.
+---
+<div class="grid">
+  {% for project in site.data.projects %}
+    {% include project-card.html project=project %}
+  {% endfor %}
+</div>

@@ -1,0 +1,8 @@
+<ul class="social">
+  {% if site.author.email != "" %}<li><a href="mailto:{{ site.author.email }}">Email</a></li>{% endif %}
+  {% if site.author.github != "" %}<li><a href="https://github.com/{{ site.author.github }}">GitHub</a></li>{% endif %}
+  {% if site.author.linkedin != "" %}<li><a href="https://www.linkedin.com/in/{{ site.author.linkedin }}">LinkedIn</a></li>{% endif %}
+  {% if site.author.orcid and site.author.orcid != "" %}<li><a href="https://orcid.org/{{ site.author.orcid }}">ORCID</a></li>{% endif %}
+  {% if site.author.scholar != "" %}<li><a href="{{ site.author.scholar }}">Google Scholar</a></li>{% endif %}
+  {% if site.posts.size > 0 %}<li><a href="{{ '/blog/feed.xml' | relative_url }}">RSS</a></li>{% endif %}
+</ul>

@@ -1,0 +1,18 @@
+---
+layout: page
+title: Blog
+intro: Notes on measurement, Bayesian methods, and the occasional flight.
+---
+{% if site.posts.size > 0 %}
+<ul class="post-list">
+  {% for post in site.posts %}
+  <li>
+    <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+    <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
+    {% if post.description %}<p>{{ post.description }}</p>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>First posts are on the way. Check back soon.</p>
+{% endif %}

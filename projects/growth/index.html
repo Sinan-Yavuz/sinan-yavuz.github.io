@@ -1,0 +1,522 @@
+---
+layout: default
+title: Bayesian Growth Models
+description: Interactive demo from my Hacettepe PhD thesis comparing maximum likelihood and Bayesian estimation of a quadratic growth model of math achievement, with and without priors from an earlier cohort.
+---
+<link rel="stylesheet" href="{{ '/assets/css/demo.css' | relative_url }}">
+<style>
+  /* Series colors for this demo; shared demo styles live in /assets/css/demo.css. */
+  :root { --s-inf: #2a78d6; --s-ml: #eb6834; --s-flat: #1baf7a; --s-obs: #c9cdd4; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --s-inf: #3987e5; --s-ml: #d95926; --s-flat: #199e70; --s-obs: #3a404c; }
+  }
+  :root[data-theme="dark"] { --s-inf: #3987e5; --s-ml: #d95926; --s-flat: #199e70; --s-obs: #3a404c; }
+  .presets { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; font-size: .88rem; color: var(--muted); }
+  .chip { font: inherit; font-size: .85rem; padding: .3rem .75rem; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; }
+  .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .two-even { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; }
+  @media (max-width: 760px) { .two-even { grid-template-columns: 1fr; } }
+</style>
+
+<header class="demo-head">
+  <p class="eyebrow">PhD thesis · Hacettepe University, 2021</p>
+  <h1>Growth Models of Achievement: Maximum Likelihood vs. Bayesian Estimation</h1>
+  <p class="lead">
+    How fast do children's math skills grow from kindergarten to fifth grade, and what predicts that growth?
+    My PhD thesis fit a three-level quadratic growth model to ECLS-K 2011 data with maximum likelihood
+    and with Bayesian estimation, including priors built from the earlier ECLS-K 1998 cohort. With the
+    full sample the methods agree. With a small sample, prior information starts to matter, both when
+    it's right and when it's wrong. Try it below.
+  </p>
+  <p class="demo-links">
+    <a class="btn" href="#playground">Try the simulation</a>
+    <a class="btn btn-ghost" href="#thesis-results">See the thesis results</a>
+  </p>
+</header>
+
+<aside class="paper">
+  <p class="paper-label">Thesis</p>
+  <p class="paper-title">Investigating Growth Models of Academic Achievement Scores by Maximum Likelihood and Bayesian Estimations</p>
+  <p class="paper-meta">Sinan Yavuz · PhD in Educational Measurement and Evaluation, Hacettepe University, Ankara · 2021 · Advisor: Prof. Dr. Selahattin Gelbal · Written in Turkish</p>
+  <p class="paper-abs">
+    A quadratic growth model of math achievement from kindergarten to grade 5 (nine time points; 2,181
+    students in 165 schools), with motivation and attention as time-varying covariates, gender, ethnicity,
+    school starting age and SES at the student level, and school type and free-lunch share at the school
+    level. Both methods gave similar results. Bayesian estimation had slightly lower prediction error in
+    the full sample and in a 15-school subsample, though the differences were in the second or third decimal place.
+  </p>
+</aside>
+
+<div class="methods">
+  <div class="method" style="--c: var(--s-ml)">
+    <h3>Maximum likelihood <small>standard practice</small></h3>
+    <p>Uses only the current data. Close to unbiased, but with few schools its estimates swing widely from sample to sample.</p>
+  </div>
+  <div class="method" style="--c: var(--s-flat)">
+    <h3>Bayes, noninformative <small>no prior information</small></h3>
+    <p>Very wide priors, so the data speak alone. Its fixed-effect estimates matched maximum likelihood closely in the thesis; in this demo they match exactly (see the notes below).</p>
+  </div>
+  <div class="method" style="--c: var(--s-inf)">
+    <h3>Bayes, informative priors <small>this research</small></h3>
+    <p>Priors taken from an earlier cohort's estimates, with the thesis's prior SDs from ECLS-K 1998. Their variance can be inflated for safety.</p>
+  </div>
+</div>
+
+<section id="playground">
+  <form class="controls" id="controls" onsubmit="return false">
+    <div class="presets" role="group" aria-label="Scenarios">
+      <span>Scenarios:</span>
+      <button type="button" class="chip" data-preset="small" aria-pressed="true">Thesis subsample: 15 schools</button>
+      <button type="button" class="chip" data-preset="full" aria-pressed="false">Full sample: 165 schools</button>
+      <button type="button" class="chip" data-preset="wrong" aria-pressed="false">Prior from a different cohort</button>
+      <button type="button" class="chip" data-preset="safe" aria-pressed="false">Wrong prior, inflated ×10</button>
+    </div>
+    <div class="ctl">
+      <label for="schools">Schools sampled <output id="schools-out"></output></label>
+      <input type="range" id="schools" min="4" max="165" step="1" value="15">
+      <p>The thesis used 165, then a random 15 for its small-sample analysis.</p>
+    </div>
+    <div class="ctl">
+      <label for="perSchool">Students per school <output id="perSchool-out"></output></label>
+      <input type="range" id="perSchool" min="3" max="25" step="1" value="13">
+      <p>Each student is measured at 9 time points.</p>
+    </div>
+    <div class="ctl">
+      <label for="drift">How far off the prior is <output id="drift-out"></output></label>
+      <input type="range" id="drift" min="0" max="3" step="0.25" value="0">
+      <p>Systematic shift of every prior mean, in prior SDs. At 0 the earlier cohort matches this one, apart from its own sampling error.</p>
+    </div>
+    <div class="ctl">
+      <label for="inflate">Prior variance multiplier <output id="inflate-out"></output></label>
+      <input type="range" id="inflate" min="1" max="20" step="1" value="1">
+      <p>Applied to every prior here. The thesis multiplied only its time-related priors' variance by 10, since the cohorts were tested at different time points.</p>
+    </div>
+    <div class="run-row">
+      <button class="btn" type="button" id="rerun">Draw new samples</button>
+      <div class="bar-progress" aria-hidden="true"><span id="progress"></span></div>
+      <span class="status" id="status" aria-live="polite">Starting…</span>
+    </div>
+  </form>
+
+  <div class="results" id="results">
+    <div>
+      <p class="callout" id="callout">Running the first simulation…</p>
+    </div>
+
+    <div>
+      <h2>Estimating the model's effects</h2>
+      <p class="sub" id="summary-sub">Bias, error, and 95% interval coverage for each effect, across replications.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="summary">
+          <thead><tr><th>Effect (true value)</th><th>Method</th><th>Bias</th><th>RMSE</th><th>95% coverage</th><th>Avg interval width</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-even">
+      <div>
+        <h2>Error relative to maximum likelihood</h2>
+        <p class="sub">RMSE of each method as a share of maximum likelihood's RMSE. Below 100% is better.</p>
+        <div class="legend" id="legend-rel"></div>
+        <div class="chart" id="chart-rel"><div class="tip" hidden></div></div>
+      </div>
+      <div>
+        <h2>Interval coverage</h2>
+        <p class="sub">How often each method's 95% interval contains the true value. Closer to 95% is better.</p>
+        <div class="legend" id="legend-cov"></div>
+        <div class="chart" id="chart-cov"><div class="tip" hidden></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="chart-head">
+        <div>
+          <h2>Estimates across samples</h2>
+          <p class="sub">Each dot is one replication's estimate. The vertical line is the true value; the diamond is where the informative prior is centered on average.</p>
+        </div>
+        <label>Effect
+          <select id="param-select"></select>
+        </label>
+      </div>
+      <div class="legend" id="legend-strip"></div>
+      <div class="chart" id="chart-strip"><div class="tip" hidden></div></div>
+    </div>
+
+    <div>
+      <div class="chart-head">
+        <div>
+          <h2>One sample's growth curves</h2>
+          <p class="sub" id="curve-sub">Math scores over time for students in the first replication, with the estimated mean curves for students 1 SD below and above average SES.</p>
+        </div>
+        <label>Fitted by
+          <select id="curve-method"><option value="inf">Bayes, informative</option><option value="ml">Maximum likelihood</option><option value="flat">Bayes, noninformative</option></select>
+        </label>
+      </div>
+      <div class="legend" id="legend-curve"></div>
+      <div class="chart" id="chart-curve"><div class="tip" hidden></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="notes" id="thesis-results">
+  <h2>What the thesis found</h2>
+  <div class="prose">
+    <p>
+      Selected fixed effects from the ECLS-K 2011 analysis, full sample (165 schools, 2,181 students)
+      against the random 15-school subsample (198 students). In the full sample the three methods agree
+      closely. In the subsample, maximum likelihood and noninformative Bayes still agree with each other, but
+      the informative priors pull estimates toward the 1998 cohort's values and narrow the intervals.
+    </p>
+  </div>
+  <div class="table-wrap" style="max-width:78ch;margin:1rem 0">
+    <table class="data-table">
+      <thead><tr><th>Effect</th><th>Sample</th><th>ML</th><th>Bayes, noninformative</th><th>Bayes, informative</th></tr></thead>
+      <tbody>
+        <tr><td>Male → start</td><td>Full</td><td>0.18 [−0.74, 1.11]</td><td>0.16 [−0.75, 1.11]</td><td>0.38 [−0.38, 1.12]</td></tr>
+        <tr><td></td><td>15 schools</td><td>3.30 [0.03, 6.56]</td><td>3.33 [−0.07, 6.66]</td><td>0.98 [−0.18, 2.16]</td></tr>
+        <tr><td>SES → start</td><td>Full</td><td>4.45 [3.72, 5.18]</td><td>4.44 [3.68, 5.18]</td><td>3.94 [3.35, 4.54]</td></tr>
+        <tr><td></td><td>15 schools</td><td>5.33 [2.81, 7.86]</td><td>5.36 [2.75, 7.96]</td><td>3.62 [2.73, 4.53]</td></tr>
+        <tr><td>Public school → start</td><td>Full</td><td>−2.00 [−4.47, 0.47]</td><td>−2.01 [−4.50, 0.56]</td><td>−1.34 [−2.92, 0.22]</td></tr>
+        <tr><td></td><td>15 schools</td><td>−5.93 [−13.52, 1.65]</td><td>−5.97 [−15.95, 3.67]</td><td>−1.27 [−3.20, 0.78]</td></tr>
+        <tr><td>Male × growth</td><td>Full</td><td>0.94 [0.74, 1.13]</td><td>0.94 [0.74, 1.13]</td><td>0.92 [0.73, 1.12]</td></tr>
+        <tr><td></td><td>15 schools</td><td>0.81 [0.16, 1.47]</td><td>0.82 [0.13, 1.47]</td><td>0.92 [0.38, 1.46]</td></tr>
+        <tr><td>Prediction RMSE*</td><td>Full</td><td>5.677</td><td>5.672</td><td>5.673</td></tr>
+        <tr><td></td><td>15 schools</td><td>5.669</td><td>5.649</td><td>5.665</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>
+      *From thesis Tables 16 and 19, where this row is labeled as mean absolute error. Because RMSE can't
+      be smaller than MAE, the two rows there appear to be swapped.
+    </p>
+    <p>
+      Substantively, math scores grow fast early and slow down later. Motivation, attention, later school
+      entry and higher SES all predict higher scores. Boys and girls start at about the same level, but boys grow faster at
+      first and plateau sooner. Black and Hispanic students start lower than Asian and White students and grow more slowly early on, and their growth levels off later.
+      School type affects only the curvature of growth.
+    </p>
+  </div>
+
+  <h2 style="margin-top:2rem">About this demo</h2>
+  <div class="prose">
+    <p>
+      Each replication simulates students in schools from the thesis's model, measured at kindergarten fall and spring,
+      grade 1 and 2 fall and spring, and grades 3–5 spring (time points 0–5, 7, 9, 11). True effects and
+      variance components come from the thesis's full-sample estimates; prior SDs come from its ECLS-K 1998
+      priors. Covariates are simplified to gender, SES (standardized) and public vs. private school
+      (93% public, as in the thesis sample). The school-level variance of growth rates isn't reported in the
+      thesis, so the demo assumes a small value (0.10). Time is counted in half-years from kindergarten fall,
+      so "growth rate at K entry" is the linear term of the quadratic, not the average growth over the years.
+    </p>
+    <p>
+      In each replication the informative prior is centered on a fresh draw around the truth, with the prior
+      SD as its spread, the way an estimate from an earlier cohort would vary. The drift slider adds a
+      systematic shift on top. A prior centered exactly on the truth would make informative priors look
+      better than they could be in practice.
+    </p>
+    <p>
+      To run in your browser, estimation is two-stage: a growth curve per student, then a GLS regression of
+      each growth coefficient on the covariates with a school random effect. The Bayesian versions combine
+      that likelihood with normal priors; the noninformative one uses priors with SD 10,000. Both methods
+      plug in the same estimates of the variance components instead of averaging over their uncertainty, so
+      noninformative Bayes reproduces maximum likelihood exactly. In the full Bayesian model of the thesis,
+      it gave nearly the same fixed effects, but different variance components and somewhat wider intervals
+      with few schools (Tables 17 and 18). This approximates the full three-level model's fixed effects
+      (the thesis used <code>lme4</code> and <code>brms</code>/Stan). Results here illustrate how the
+      methods behave; they aren't the thesis's results. Each run uses 200 replications.
+    </p>
+  </div>
+  <h2 style="margin-top:2rem">Cite</h2>
+  <div class="cite">Yavuz, S. (2021). Başarı puanları üzerine kurulan büyüme modellerinin Bayes ve
+en çok olabilirlik kestirim yöntemleri ile incelenmesi [Investigating growth
+models of academic achievement scores by maximum likelihood and Bayesian
+estimations] (Doctoral dissertation). Hacettepe University, Ankara.</div>
+</section>
+
+<script src="{{ '/assets/js/demo-charts.js' | relative_url }}"></script>
+<script src="growth-sim.js"></script>
+<script>
+(function () {
+  var METHODS = [
+    { key: "ml", name: "Maximum likelihood", color: "var(--s-ml)" },
+    { key: "flat", name: "Bayes, noninformative", color: "var(--s-flat)" },
+    { key: "inf", name: "Bayes, informative", color: "var(--s-inf)" }
+  ];
+  var PARAMS = GrowthSim.PARAMS, REPS = 200;
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DemoCharts, el = D.el, txt = D.txt, fmt = D.fmt, pct = D.pct, legend = D.legend, attachTip = D.attachTip, clearSvg = D.clearSvg;
+
+  // ---------- Controls ----------
+  var sliders = ["schools", "perSchool", "drift", "inflate"];
+  function params() { return { schools: +$("schools").value, perSchool: +$("perSchool").value, drift: +$("drift").value, inflate: +$("inflate").value }; }
+  function syncOutputs() {
+    $("schools-out").textContent = $("schools").value;
+    $("perSchool-out").textContent = $("perSchool").value;
+    $("drift-out").textContent = (+$("drift").value).toFixed(2) + " SD";
+    $("inflate-out").textContent = "×" + $("inflate").value;
+  }
+  PARAMS.forEach(function (P) { var o = document.createElement("option"); o.value = P.key; o.textContent = P.name; $("param-select").appendChild(o); });
+  $("param-select").value = "male0";
+
+  // ---------- Simulation runner ----------
+  var worker = null, runId = 0, seed = 2021, acc, first, debounce;
+  function start() {
+    runId++;
+    var id = runId, q = params();
+    acc = { reps: 0, outs: [], q: q }; first = null;
+    $("results").classList.add("busy");
+    $("status").textContent = "Simulating 0 / " + REPS;
+    $("progress").style.width = "0";
+    if (worker) worker.terminate();
+    try { worker = new Worker("growth-worker.js"); } catch (e) { worker = null; }
+    var onRep = function (o) {
+      if (o.id !== runId) return;
+      if (o.curves) first = o;
+      acc.reps++; if (!o.skip) acc.outs.push(o);
+      $("status").textContent = (acc.reps < REPS ? "Simulating " : "Done: ") + acc.reps + " / " + REPS + " replications";
+      $("progress").style.width = (100 * acc.reps / REPS) + "%";
+      if (acc.outs.length && (acc.reps === REPS || acc.reps % 50 === 1)) render();
+      if (acc.reps === REPS) $("results").classList.remove("busy");
+    };
+    if (worker) {
+      worker.onmessage = function (e) { onRep(e.data); };
+      worker.onerror = function () { worker = null; fallback(); };
+      worker.postMessage({ id: id, params: q, reps: REPS, seed: seed });
+    } else fallback();
+    function fallback() {
+      var i = acc.reps;
+      (function step() {
+        if (id !== runId || i >= REPS) return;
+        for (var b = 0; b < 10 && i < REPS; b++, i++) {
+          var o = GrowthSim.replicate(q, seed + i * 7919, { keepData: i === 0 }) || { skip: true };
+          o.id = id; onRep(o);
+        }
+        setTimeout(step, 0);
+      })();
+    }
+  }
+  function schedule() { syncOutputs(); clearTimeout(debounce); debounce = setTimeout(start, 250); }
+
+  // ---------- Metrics ----------
+  function metrics() {
+    var out = {};
+    PARAMS.forEach(function (P) {
+      out[P.key] = {};
+      METHODS.forEach(function (m) {
+        var o = { bias: 0, se: 0, cov: 0, w: 0, n: 0 };
+        acc.outs.forEach(function (r) {
+          var row = r.params[P.key], e = row[m.key], d = e.est - row.truth;
+          o.bias += d; o.se += d * d; o.cov += (row.truth >= e.lo && row.truth <= e.hi) ? 1 : 0; o.w += e.hi - e.lo; o.n++;
+        });
+        o.bias /= o.n; o.rmse = Math.sqrt(o.se / o.n); o.cov /= o.n; o.w /= o.n;
+        out[P.key][m.key] = o;
+      });
+    });
+    return out;
+  }
+
+  function render() {
+    var m = metrics();
+    renderCallout(m); renderSummary(m); renderRel(m); renderCov(m); renderStrip(); renderCurves();
+  }
+
+  function renderCallout(m) {
+    var rel = 0, minCov = 1, worst = null;
+    PARAMS.forEach(function (P) {
+      rel += m[P.key].inf.rmse / m[P.key].ml.rmse;
+      if (m[P.key].inf.cov < minCov) { minCov = m[P.key].inf.cov; worst = P; }
+    });
+    rel /= PARAMS.length;
+    var q = acc.q, s = "With <b>" + q.schools + " schools</b> (" + q.schools * q.perSchool + " students), ";
+    if (rel < 0.97) s += "informative priors cut the error by <b>" + Math.round((1 - rel) * 100) + "%</b> on average relative to maximum likelihood";
+    else if (rel > 1.03) s += "informative priors <b>raise</b> the error by " + Math.round((rel - 1) * 100) + "% on average relative to maximum likelihood";
+    else s += "informative priors and maximum likelihood are about equally accurate";
+    s += ". Noninformative Bayes matches maximum likelihood.";
+    if (minCov < 0.88) s += " But the prior is off, so the informative intervals miss the truth too often: coverage for <b>" + worst.name + "</b> drops to <b>" + pct(minCov) + "</b>." + (q.inflate < 5 ? " Inflating the prior variance, as the thesis did for its time terms, restores it." : "");
+    else if (q.drift > 0) s += " Even with the prior " + q.drift.toFixed(2) + " SD off, " + (q.inflate > 1 ? "inflating its variance keeps" : "the data keep") + " coverage near 95%.";
+    else if (q.schools >= 100) s += " With this much data the prior matters less, which matches the thesis's full-sample results.";
+    $("callout").innerHTML = s;
+  }
+
+  function renderSummary(m) {
+    var tb = $("summary").querySelector("tbody"); tb.textContent = "";
+    PARAMS.forEach(function (P) {
+      METHODS.forEach(function (meth, i) {
+        var o = m[P.key][meth.key], tr = document.createElement("tr"), c0 = document.createElement("td");
+        if (i === 0) { c0.textContent = P.name + " (" + fmt(GrowthSim.TRUTH[P.k][P.c], 2) + ")"; c0.style.fontWeight = "600"; }
+        tr.appendChild(c0);
+        var c1 = document.createElement("td"), k = document.createElement("span"); k.className = "key"; k.style.setProperty("--c", meth.color);
+        c1.style.textAlign = "left"; c1.appendChild(k); c1.appendChild(document.createTextNode(meth.name)); tr.appendChild(c1);
+        [(o.bias >= 0 ? "+" : "") + fmt(o.bias, 3), fmt(o.rmse, 3), pct(o.cov), fmt(o.w, 2)].forEach(function (v, j) {
+          var td = document.createElement("td"); td.textContent = v;
+          if (j === 2 && o.cov < 0.88) { var pill = document.createElement("span"); pill.className = "pill-warn"; pill.textContent = "⚠ Under-covers"; td.appendChild(pill); }
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+    });
+    $("summary-sub").textContent = "Across " + acc.outs.length + " replications. Intervals are 95% confidence intervals for maximum likelihood and 95% credible intervals for the Bayesian methods.";
+  }
+
+  // Dot plot: one row per effect, one dot per method.
+  function dotRows(chart, rows, opts) {
+    clearSvg(chart);
+    var W = Math.max(280, chart.clientWidth), rowH = 30, ml = 190, mr = 16, mt = 6;
+    if (W < 480) ml = 150;
+    var H = mt + rows.length * rowH + 24;
+    var x = function (v) { return ml + (W - ml - mr) * (Math.min(v, opts.max) - opts.min) / (opts.max - opts.min); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": opts.label });
+    var axisY = mt + rows.length * rowH;
+    opts.ticks.forEach(function (t) {
+      el("line", { x1: x(t), x2: x(t), y1: mt, y2: axisY, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, x(t), axisY + 16, opts.tickFmt(t), { "text-anchor": "middle" });
+    });
+    el("line", { x1: x(opts.ref), x2: x(opts.ref), y1: mt - 2, y2: axisY, stroke: "var(--truth)", "stroke-width": 2 }, svg);
+    rows.forEach(function (r, i) {
+      var cy = mt + i * rowH + rowH / 2;
+      txt(svg, ml - 10, cy + 4, r.name, { "text-anchor": "end" });
+      el("line", { x1: ml, x2: W - mr, y1: cy, y2: cy, stroke: "var(--grid)", "stroke-dasharray": "2 3" }, svg);
+      METHODS.forEach(function (meth) {
+        var v = r.values[meth.key];
+        if (meth.key === "flat") el("circle", { cx: x(v), cy: cy, r: 8, fill: "none", stroke: meth.color, "stroke-width": 2 }, svg);
+        else el("circle", { cx: x(v), cy: cy, r: 5.5, fill: meth.color, stroke: "var(--bg)", "stroke-width": 1.5 }, svg);
+      });
+      var hit = el("rect", { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: "transparent" }, svg);
+      attachTip(hit, chart, function () { return [r.name, METHODS.map(function (meth) { return { label: meth.name, value: opts.valFmt(r.values[meth.key]), color: meth.color }; })]; });
+    });
+    chart.insertBefore(svg, chart.firstChild);
+  }
+  function methodLegend(id, extra) {
+    legend(id, METHODS.map(function (x) { return { name: x.name, color: x.color, cls: "dot" }; }).concat(extra || []));
+  }
+
+  function renderRel(m) {
+    methodLegend("legend-rel", [{ name: "Maximum likelihood = 100%", color: "var(--truth)", cls: "tick" }]);
+    var rows = PARAMS.map(function (P) {
+      var v = {}; METHODS.forEach(function (meth) { v[meth.key] = m[P.key][meth.key].rmse / m[P.key].ml.rmse; });
+      return { name: P.name, values: v };
+    });
+    var mx = 1.25; rows.forEach(function (r) { mx = Math.max(mx, r.values.inf); });
+    mx = Math.min(2, Math.ceil(mx * 4) / 4);
+    var tk = []; for (var t = 0; t <= mx + 1e-9; t += mx > 1.5 ? 0.5 : 0.25) tk.push(t);
+    dotRows($("chart-rel"), rows, { min: 0, max: mx, ref: 1, ticks: tk, tickFmt: function (t) { return Math.round(t * 100) + "%"; }, valFmt: function (v) { return Math.round(v * 100) + "%"; }, label: "RMSE relative to maximum likelihood" });
+  }
+
+  function renderCov(m) {
+    methodLegend("legend-cov", [{ name: "95% target", color: "var(--truth)", cls: "tick" }]);
+    var rows = PARAMS.map(function (P) {
+      var v = {}; METHODS.forEach(function (meth) { v[meth.key] = m[P.key][meth.key].cov; });
+      return { name: P.name, values: v };
+    });
+    var lo = 1; rows.forEach(function (r) { METHODS.forEach(function (meth) { lo = Math.min(lo, r.values[meth.key]); }); });
+    lo = Math.max(0, Math.floor(lo * 10) / 10 - 0.05); lo = Math.min(lo, 0.8);
+    var tk = []; for (var t = Math.ceil(lo * 10) / 10; t <= 1.0001; t += lo < 0.5 ? 0.2 : 0.1) tk.push(+t.toFixed(2));
+    dotRows($("chart-cov"), rows, { min: lo, max: 1, ref: 0.95, ticks: tk, tickFmt: function (t) { return Math.round(t * 100) + "%"; }, valFmt: pct, label: "95% interval coverage" });
+  }
+
+  function renderStrip() {
+    var chart = $("chart-strip"); clearSvg(chart);
+    var key = $("param-select").value, P = PARAMS.filter(function (p) { return p.key === key; })[0];
+    legend("legend-strip", METHODS.map(function (x) { return { name: x.name, color: x.color, cls: "dot" }; }).concat([
+      { name: "True value", color: "var(--truth)", cls: "tick" }, { name: "Prior center (average)", color: "var(--truth)" }]));
+    var truth = GrowthSim.TRUTH[P.k][P.c], prior = acc.outs[0].params[key].priorCenter;
+    var all = [truth, prior];
+    acc.outs.forEach(function (r) { METHODS.forEach(function (m) { all.push(r.params[key][m.key].est); }); });
+    all.sort(function (a, b) { return a - b; });
+    var lo = all[Math.floor(all.length * 0.005)], hi = all[Math.ceil(all.length * 0.995) - 1];
+    lo = Math.min(lo, truth, prior); hi = Math.max(hi, truth, prior);
+    var pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
+    var W = Math.max(300, chart.clientWidth), rowH = 54, ml = W < 480 ? 110 : 150, mr = 14, mt = 8, H = mt + METHODS.length * rowH + 26;
+    var X = function (v) { return ml + (W - ml - mr) * (v - lo) / (hi - lo); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "Estimates of " + P.name + " across replications" });
+    var axisY = mt + METHODS.length * rowH, step = D.niceMax((hi - lo) / 5);
+    for (var t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+      el("line", { x1: X(t), x2: X(t), y1: mt, y2: axisY, stroke: "var(--grid)" }, svg);
+      txt(svg, X(t), axisY + 16, fmt(t, step < 0.1 ? 2 : step < 1 ? 1 : 0), { "text-anchor": "middle" });
+    }
+    METHODS.forEach(function (meth, i) {
+      var cy = mt + i * rowH + rowH / 2;
+      txt(svg, ml - 10, cy + 4, meth.name, { "text-anchor": "end" });
+      acc.outs.forEach(function (o, j) {
+        var v = o.params[key][meth.key].est; if (v < lo || v > hi) return;
+        var jit = ((j * 2654435761) % 1000) / 1000 - 0.5;
+        el("circle", { cx: X(v), cy: cy + jit * (rowH - 18), r: 2.6, fill: meth.color, "fill-opacity": 0.55 }, svg);
+      });
+    });
+    el("line", { x1: X(truth), x2: X(truth), y1: mt - 2, y2: axisY, stroke: "var(--truth)", "stroke-width": 2 }, svg);
+    var py = mt + 2 * rowH + rowH / 2, s = 6;
+    el("path", { d: "M" + X(prior) + "," + (py - s) + "l" + s + "," + s + "l" + (-s) + "," + s + "l" + (-s) + "," + (-s) + "Z", fill: "var(--truth)", stroke: "var(--bg)", "stroke-width": 1.5 }, svg);
+    chart.insertBefore(svg, chart.firstChild);
+  }
+
+  function renderCurves() {
+    var chart = $("chart-curve"); clearSvg(chart);
+    if (!first) return;
+    var key = $("curve-method").value, meth = METHODS.filter(function (m) { return m.key === key; })[0], T = GrowthSim.TIMES;
+    legend("legend-curve", [
+      { name: "Students (sample)", color: "var(--s-obs)" },
+      { name: "True mean curve", color: "var(--truth)", cls: "tick" },
+      { name: meth.name + " estimate", color: meth.color }
+    ]);
+    var W = Math.max(300, chart.clientWidth), H = 350, ml = 40, mr = 70, mt = 22, mb = 30;
+    var ymin = 0, ymax = 180;
+    var X = function (t) { return ml + (W - ml - mr) * t / 11; }, Y = function (v) { return mt + (H - mt - mb) * (1 - (v - ymin) / (ymax - ymin)); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "Student growth curves and estimated mean curves" });
+    for (var v = 0; v <= ymax; v += 30) { el("line", { x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: "var(--grid)" }, svg); txt(svg, ml - 6, Y(v) + 4, String(v), { "text-anchor": "end" }); }
+    var labels = ["K", "", "1", "", "2", "", "3", "4", "5"];
+    T.forEach(function (t, i) { if (labels[i]) txt(svg, X(t), H - mb + 16, labels[i], { "text-anchor": "middle" }); });
+    txt(svg, W - mr, H - 4, "grade", { "text-anchor": "end", class: "axis-label" });
+    txt(svg, ml - 6, mt - 10, "score", { "text-anchor": "end", class: "axis-label" });
+    var path = function (ys) { return ys.map(function (y, i) { return (i ? "L" : "M") + X(T[i]).toFixed(1) + "," + Y(Math.max(ymin, Math.min(ymax, y))).toFixed(1); }).join(""); };
+    first.sample.forEach(function (s) { el("path", { d: path(s.y), fill: "none", stroke: "var(--s-obs)", "stroke-width": 1 }, svg); });
+    ["low", "high"].forEach(function (g) {
+      el("path", { d: path(first.curves.truth[g]), fill: "none", stroke: "var(--truth)", "stroke-width": 2, "stroke-dasharray": "5 4" }, svg);
+      var est = first.curves[key][g];
+      el("path", { d: path(est), fill: "none", stroke: meth.color, "stroke-width": 3 }, svg);
+      txt(svg, X(11) + 6, Y(est[est.length - 1]) + 4, g === "high" ? "SES +1 SD" : "SES −1 SD", { class: "strong" });
+    });
+    var hit = el("rect", { x: ml, y: mt, width: W - ml - mr, height: H - mt - mb, fill: "transparent" }, svg);
+    var names = ["K fall", "K spring", "Gr 1 fall", "Gr 1 spring", "Gr 2 fall", "Gr 2 spring", "Gr 3 spring", "Gr 4 spring", "Gr 5 spring"];
+    hit.addEventListener("pointermove", function (e) {
+      var b = svg.getBoundingClientRect(), sx = (e.clientX - b.left) * W / b.width, best = 0;
+      T.forEach(function (t, i) { if (Math.abs(X(t) - sx) < Math.abs(X(T[best]) - sx)) best = i; });
+      D.showTip(chart, e, names[best], [
+        { label: "True, high SES", value: fmt(first.curves.truth.high[best], 1) },
+        { label: "Estimated, high SES", value: fmt(first.curves[key].high[best], 1), color: meth.color },
+        { label: "True, low SES", value: fmt(first.curves.truth.low[best], 1) },
+        { label: "Estimated, low SES", value: fmt(first.curves[key].low[best], 1), color: meth.color }
+      ]);
+    });
+    hit.addEventListener("pointerleave", function () { D.hideTip(chart); });
+    chart.insertBefore(svg, chart.firstChild);
+    $("curve-sub").textContent = "Math scores over time for " + first.sample.length + " of the " + first.n + " students in the first replication, with mean curves for students 1 SD below and above average SES. Dashed lines are the true curves.";
+  }
+
+  // ---------- Scenarios ----------
+  var PRESETS = {
+    small: { schools: 15, perSchool: 13, drift: 0, inflate: 1 },
+    full: { schools: 165, perSchool: 13, drift: 0, inflate: 1 },
+    wrong: { schools: 15, perSchool: 13, drift: 2, inflate: 1 },
+    safe: { schools: 15, perSchool: 13, drift: 2, inflate: 10 }
+  };
+  var chips = Array.prototype.slice.call(document.querySelectorAll(".chip"));
+  function markPreset(name) { chips.forEach(function (c) { c.setAttribute("aria-pressed", c.dataset.preset === name ? "true" : "false"); }); }
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      var pr = PRESETS[c.dataset.preset];
+      Object.keys(pr).forEach(function (key) { $(key).value = pr[key]; });
+      markPreset(c.dataset.preset); schedule();
+    });
+  });
+
+  sliders.forEach(function (id) { $(id).addEventListener("input", function () { markPreset(null); schedule(); }); });
+  $("rerun").addEventListener("click", function () { seed += 104729; start(); });
+  $("param-select").addEventListener("change", function () { if (acc.outs.length) renderStrip(); });
+  $("curve-method").addEventListener("change", renderCurves);
+  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (acc && acc.outs.length) render(); }, 150); });
+  syncOutputs();
+  start();
+})();
+</script>

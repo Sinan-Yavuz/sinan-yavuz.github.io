@@ -1,0 +1,69 @@
+# ---------------------------------------------------------------
+# Every project, tool and experiment on the site.
+# Add an entry here and it appears on the Projects page.
+#
+#   name:       Display name (required)
+#   summary:    One or two sentences: what it does and why it matters
+#   type:       project | tool   (tools are also listed on /tools/)
+#   featured:   true to show it on the home page
+#   status:     optional badge, e.g. "Live", "In progress", "Paper"
+#   tags:       short list of skills/tech, which recruiters skim for
+#   link:       demo / write-up URL, or a path on this site (/tools/x/)
+#   link_label: optional text for the link (default "Open")
+#   repo:       optional source-code URL
+#   paper:      optional paper URL (arXiv, DOI)
+# ---------------------------------------------------------------
+
+- name: SABDB
+  summary: >-
+    Small Area Bayesian Dynamic Borrowing, my dissertation model for estimating
+    subgroup achievement in large-scale assessments like NAEP and PISA. It borrows strength across states only as
+    much as the data support. Includes an interactive simulation that compares
+    it with standard hierarchical models.
+  type: project
+  featured: true
+  status: Dissertation · 2026
+  tags: [Bayesian statistics, Stan, R, Small area estimation, NAEP, PISA]
+  link: /projects/sabdb/
+  link_label: Interactive demo
+  repo: https://github.com/Sinan-Yavuz/SABDB
+  paper: https://arxiv.org/abs/2608.07708
+
+- name: miBMA
+  summary: >-
+    R package for multiple imputation under Bayesian model averaging. It accounts
+    for uncertainty in which imputation model is right, not just in its
+    parameters, and plugs into mice as method = "miBMA". Includes an
+    interactive simulation comparing it with standard imputation. Companion
+    software to Kaplan & Yavuz (2020), Multivariate Behavioral Research.
+  type: project
+  featured: true
+  status: Published · 2020
+  tags: [R package, Missing data, Bayesian model averaging, mice]
+  link: /projects/mibma/
+  link_label: Interactive demo
+  repo: https://github.com/Sinan-Yavuz/miBMA
+  paper: https://doi.org/10.1080/00273171.2019.1657790
+
+- name: Bayesian Growth Models
+  summary: >-
+    My Hacettepe PhD thesis, which compares maximum likelihood and Bayesian estimation of a three-level
+    quadratic growth model of math achievement from kindergarten to grade 5 (ECLS-K 2011), using
+    priors built from the 1998 cohort. Includes an interactive simulation showing when prior
+    information helps in small samples and when it misleads.
+  type: project
+  featured: false
+  status: PhD thesis · 2021
+  tags: [Bayesian statistics, Growth models, Multilevel models, brms, lme4, ECLS-K]
+  link: /projects/growth/
+  link_label: Interactive demo
+
+# --- Template: copy, uncomment and fill in -----------------------
+# - name: My Project
+#   summary: What problem it solves, how, and the result.
+#   type: project
+#   featured: true
+#   status: In progress
+#   tags: [Python, R, Machine Learning]
+#   link: https://example.com
+#   repo: https://github.com/Sinan-Yavuz/my-project

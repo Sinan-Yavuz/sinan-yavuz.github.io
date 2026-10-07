@@ -1,0 +1,18 @@
+{% assign p = include.project %}
+<article class="card">
+  <div class="card-top">
+    <h3>
+      {% if p.link %}<a href="{% if p.link contains '://' %}{{ p.link }}{% else %}{{ p.link | relative_url }}{% endif %}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}
+    </h3>
+    {% if p.status %}<span class="badge">{{ p.status }}</span>{% endif %}
+  </div>
+  <p>{{ p.summary }}</p>
+  {% if p.tags %}
+  <ul class="tags">{% for t in p.tags %}<li class="tag">{{ t }}</li>{% endfor %}</ul>
+  {% endif %}
+  <p class="card-links">
+    {% if p.link %}<a href="{% if p.link contains '://' %}{{ p.link }}{% else %}{{ p.link | relative_url }}{% endif %}">{{ p.link_label | default: "Open" }} →</a>{% endif %}
+    {% if p.paper %}<a href="{{ p.paper }}">Paper</a>{% endif %}
+    {% if p.repo and p.repo != p.link %}<a href="{{ p.repo }}">Source</a>{% endif %}
+  </p>
+</article>

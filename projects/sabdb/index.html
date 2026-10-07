@@ -1,0 +1,451 @@
+---
+layout: default
+title: SABDB
+description: Interactive demo of Small Area Bayesian Dynamic Borrowing (SABDB), a Bayesian model for subgroup achievement estimation, compared with HBSAE and direct estimates.
+---
+<link rel="stylesheet" href="{{ '/assets/css/demo.css' | relative_url }}">
+<style>
+  /* Series colors for this demo; shared demo styles live in /assets/css/demo.css. */
+  :root { --s-sabdb: #2a78d6; --s-hbsae: #eb6834; --s-direct: #1baf7a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70; }
+  }
+  :root[data-theme="dark"] { --s-sabdb: #3987e5; --s-hbsae: #d95926; --s-direct: #199e70; }
+</style>
+
+<header class="demo-head">
+  <p class="eyebrow">Dissertation research · University of Wisconsin–Madison, 2026</p>
+  <h1>SABDB: Small Area Bayesian Dynamic Borrowing</h1>
+  <p class="lead">
+    Large-scale assessments like NAEP and PISA sample enough students to report state averages, but
+    not enough to report reliable averages for small subgroups within each state. SABDB is a Bayesian
+    model I developed that borrows information across states only as much as the data say those
+    states are alike. Move the sliders to change how the states differ and see how SABDB compares with
+    standard approaches.
+  </p>
+  <p class="demo-links">
+    <a class="btn" href="#playground">Try the simulation</a>
+    <a class="btn btn-ghost" href="https://arxiv.org/abs/2608.07708">Read the paper</a>
+    <a class="btn btn-ghost" href="https://github.com/Sinan-Yavuz/SABDB">Code on GitHub</a>
+  </p>
+</header>
+
+<aside class="paper">
+  <p class="paper-label">Paper</p>
+  <p class="paper-title"><a href="https://arxiv.org/abs/2608.07708">Small Area Bayesian Dynamic Borrowing: Adaptive Subgroup Estimation for Large-Scale Educational Assessments</a></p>
+  <p class="paper-meta">Sinan Yavuz &amp; David Kaplan · arXiv:2608.07708 · 2026</p>
+  <p class="paper-abs">
+    NAEP suppresses subgroup estimates when fewer than 62 students are sampled, which falls hardest on
+    historically underrepresented groups. The paper compares SABDB with unit-level HBSAE in a simulation
+    modeled on NAEP grade 8 mathematics and a PISA 2018 case study. SABDB achieved near-nominal interval
+    coverage in both, while HBSAE's intervals were narrow but badly miscalibrated.
+  </p>
+</aside>
+
+<div class="methods">
+  <div class="method" style="--c: var(--s-direct)">
+    <h3>Direct <small>sample mean</small></h3>
+    <p>Average of the sampled students in each state and subgroup. Unbiased, but very noisy when only a handful of students are sampled, and undefined when fewer than two are.</p>
+  </div>
+  <div class="method" style="--c: var(--s-hbsae)">
+    <h3>HBSAE <small>standard practice</small></h3>
+    <p>Hierarchical model with a random intercept per state and subgroup effects shared by all states. Very stable, but it assumes every state has the same subgroup gaps.</p>
+  </div>
+  <div class="method" style="--c: var(--s-sabdb)">
+    <h3>SABDB <small>this research</small></h3>
+    <p>Each state gets its own intercept <em>and</em> its own subgroup gaps, drawn from a shared distribution. A separate variance τ² per coefficient lets the data decide how much each one borrows.</p>
+  </div>
+</div>
+
+<section id="playground">
+  <form class="controls" id="controls" onsubmit="return false">
+    <div class="ctl">
+      <label for="gapSD">Gap differences across states <output id="gapSD-out"></output></label>
+      <input type="range" id="gapSD" min="0" max="25" step="1" value="10">
+      <p>SD of state-specific subgroup gaps, in NAEP points. HBSAE assumes 0.</p>
+    </div>
+    <div class="ctl">
+      <label for="levelSD">State average differences <output id="levelSD-out"></output></label>
+      <input type="range" id="levelSD" min="0" max="25" step="1" value="10">
+      <p>SD of overall state means, in NAEP points.</p>
+    </div>
+    <div class="ctl">
+      <label for="n">Students sampled per state <output id="n-out"></output></label>
+      <input type="range" id="n" min="150" max="1500" step="50" value="600">
+      <p>Smaller samples mean fewer students in each subgroup, especially Asian students (about 5%).</p>
+    </div>
+    <div class="ctl">
+      <label for="states">Number of states <output id="states-out"></output></label>
+      <input type="range" id="states" min="10" max="50" step="5" value="20">
+      <p>More states give the models more information about how states vary.</p>
+    </div>
+    <div class="ctl">
+      <label for="prior">Prior on τ² (SABDB)</label>
+      <select id="prior">
+        <option value="1">Inv-Gamma(1, 1), as in the paper's code</option>
+        <option value="0.1">Inv-Gamma(0.1, 0.1), weaker</option>
+        <option value="0.01">Inv-Gamma(0.01, 0.01), weakest</option>
+      </select>
+      <p>Weaker priors let τ shrink toward 0, so SABDB can borrow more when states are alike.</p>
+    </div>
+    <div class="run-row">
+      <button class="btn" type="button" id="rerun">Draw new samples</button>
+      <div class="bar-progress" aria-hidden="true"><span id="progress"></span></div>
+      <span class="status" id="status" aria-live="polite">Starting…</span>
+    </div>
+  </form>
+
+  <div class="results" id="results">
+    <div>
+      <p class="callout" id="callout">Running the first simulation…</p>
+    </div>
+
+    <div>
+      <h2>How accurate is each method?</h2>
+      <p class="sub" id="summary-sub">Averaged over every state and subgroup cell, across all replications.</p>
+      <div class="table-wrap">
+        <table class="data-table" id="summary">
+          <thead><tr><th>Method</th><th>RMSE (points)</th><th>Bias</th><th>95% interval coverage</th><th>Avg interval width</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Error by subgroup</h2>
+        <p class="sub">Root mean squared error against the true population mean. Lower is better.</p>
+        <div class="legend" id="legend-rmse"></div>
+        <div class="chart" id="chart-rmse"><div class="tip" hidden></div></div>
+        <details class="more">
+          <summary>Show as a table</summary>
+          <div class="table-wrap"><table class="data-table" id="rmse-table"></table></div>
+        </details>
+      </div>
+      <div>
+        <h2>How much SABDB borrows</h2>
+        <p class="sub">Estimated between-state SD (τ) for each coefficient, in NAEP points. A small τ pulls states toward the shared value; a large τ lets each state rely on its own data.</p>
+        <div class="legend" id="legend-tau"></div>
+        <div class="chart" id="chart-tau"><div class="tip" hidden></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="chart-head">
+        <div>
+          <h2>One sample, state by state</h2>
+          <p class="sub" id="dots-sub">Estimates and 95% intervals from the most recent replication, for the states with the fewest sampled students in the chosen subgroup.</p>
+        </div>
+        <label>Subgroup
+          <select id="group"><option value="3">Asian</option><option value="1">Black</option><option value="2">Hispanic</option><option value="0">White</option></select>
+        </label>
+      </div>
+      <div class="legend" id="legend-dots"></div>
+      <div class="chart" id="chart-dots"><div class="tip" hidden></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="notes">
+  <h2>About this demo</h2>
+  <div class="prose">
+    <p>
+      Each replication simulates a population of states with four subgroups (approximate 2019 NAEP grade 8
+      math means), draws a sample of students from every state, and fits all three methods. SABDB and HBSAE
+      use the same priors as the Stan models in the
+      <a href="https://github.com/Sinan-Yavuz/SABDB">SABDB repository</a>. Here they're fit with a Gibbs sampler
+      in your browser (700 iterations, 250 warm-up) instead of Stan's HMC.
+    </p>
+    <p>
+      To keep it fast, the demo simplifies the dissertation's simulation design: students are sampled at random
+      within each state rather than through schools, there are no sampling weights, and within-subgroup SD is
+      fixed at 36 points. Results here illustrate how the methods behave. They aren't the dissertation's
+      reported results.
+    </p>
+  </div>
+  <h2 style="margin-top:2rem">Cite</h2>
+  <div class="cite">Yavuz, S., &amp; Kaplan, D. (2026). Small Area Bayesian Dynamic Borrowing:
+Adaptive Subgroup Estimation for Large-Scale Educational Assessments.
+arXiv:2608.07708. https://arxiv.org/abs/2608.07708
+
+Yavuz, S. (2026). Subgroup Achievement Estimation for Large-Scale Assessments:
+Small Area Bayesian Dynamic Borrowing Model [Doctoral dissertation,
+University of Wisconsin–Madison].</div>
+</section>
+
+<script src="{{ '/assets/js/demo-charts.js' | relative_url }}"></script>
+<script src="sabdb-sim.js"></script>
+<script>
+(function () {
+  var GROUPS = SABDBSim.GROUPS;
+  var METHODS = [
+    { key: "sabdb", name: "SABDB", color: "var(--s-sabdb)" },
+    { key: "hbsae", name: "HBSAE", color: "var(--s-hbsae)" },
+    { key: "direct", name: "Direct", color: "var(--s-direct)" }
+  ];
+  var REPS = 12;
+  var $ = function (id) { return document.getElementById(id); };
+  var D = DemoCharts, el = D.el, txt = D.txt, fmt = D.fmt, pct = D.pct, legend = D.legend, niceMax = D.niceMax,
+    ticks = D.ticks, roundTop = D.roundTop, roundRight = D.roundRight, attachTip = D.attachTip, clearSvg = D.clearSvg;
+
+  // ---------- Controls ----------
+  var ids = ["gapSD", "levelSD", "n", "states"];
+  function params() {
+    return { gapSD: +$("gapSD").value, levelSD: +$("levelSD").value, n: +$("n").value,
+      states: +$("states").value, nu1: +$("prior").value, nu2: +$("prior").value };
+  }
+  function syncOutputs() {
+    $("gapSD-out").textContent = $("gapSD").value + " pts";
+    $("levelSD-out").textContent = $("levelSD").value + " pts";
+    $("n-out").textContent = $("n").value;
+    $("states-out").textContent = $("states").value;
+  }
+
+  // ---------- Simulation runner ----------
+  var worker = null, runId = 0, seed = 20260, acc, lastRep, debounce;
+  function useWorker() {
+    try { return new Worker("sabdb-worker.js"); } catch (e) { return null; }
+  }
+  function start() {
+    runId++;
+    var id = runId, p = params();
+    acc = { reps: 0, rows: [], tau: [0, 0, 0, 0], hbTau: 0, p: p };
+    $("results").classList.add("busy");
+    $("status").textContent = "Simulating 0 / " + REPS;
+    $("progress").style.width = "0";
+    if (worker) worker.terminate();
+    worker = useWorker();
+    var onRep = function (m) {
+      if (m.id !== runId) return;
+      acc.reps++; lastRep = m;
+      Array.prototype.push.apply(acc.rows, m.rows);
+      for (var k = 0; k < 4; k++) acc.tau[k] += m.tau[k];
+      acc.hbTau += m.hbTauLevel;
+      $("status").textContent = (acc.reps < REPS ? "Simulating " : "Done: ") + acc.reps + " / " + REPS + " replications";
+      $("progress").style.width = (100 * acc.reps / REPS) + "%";
+      if (acc.reps === REPS || acc.reps % 3 === 1) render();
+      if (acc.reps === REPS) $("results").classList.remove("busy");
+    };
+    if (worker) {
+      worker.onmessage = function (e) { onRep(e.data); };
+      worker.onerror = function () { worker = null; fallback(); };
+      worker.postMessage({ id: id, params: p, reps: REPS, seed: seed });
+    } else fallback();
+    function fallback() {
+      var i = acc.reps;
+      (function step() {
+        if (id !== runId || i >= REPS) return;
+        var out = SABDBSim.replicate(p, seed + i * 7919); i++;
+        onRep({ id: id, rows: out.rows, tau: out.tau, hbTauLevel: out.hbTauLevel });
+        setTimeout(step, 0);
+      })();
+    }
+  }
+  function schedule() { syncOutputs(); clearTimeout(debounce); debounce = setTimeout(start, 250); }
+
+  // ---------- Metrics ----------
+  function metrics(rows, filter) {
+    var out = {};
+    METHODS.forEach(function (m) { out[m.key] = { se: 0, bias: 0, cov: 0, w: 0, n: 0 }; });
+    rows.forEach(function (r) {
+      if (!r.direct || (filter && !filter(r))) return;   // compare on cells every method can estimate
+      METHODS.forEach(function (m) {
+        var e = r[m.key], o = out[m.key], d = e.est - r.truth;
+        o.se += d * d; o.bias += d; o.cov += (r.truth >= e.lo && r.truth <= e.hi) ? 1 : 0; o.w += e.hi - e.lo; o.n++;
+      });
+    });
+    METHODS.forEach(function (m) {
+      var o = out[m.key];
+      o.rmse = Math.sqrt(o.se / o.n); o.bias /= o.n; o.cov /= o.n; o.w /= o.n;
+    });
+    return out;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    var all = metrics(acc.rows);
+    var missing = acc.rows.filter(function (r) { return !r.direct; }).length;
+    renderCallout(all);
+    renderSummary(all, missing);
+    renderRmse();
+    renderTau();
+    renderDots();
+  }
+
+  function renderCallout(m) {
+    var s = m.sabdb.rmse, h = m.hbsae.rmse, d = m.direct.rmse;
+    var vs = function (other, name) {
+      var diff = (other - s) / other;
+      if (Math.abs(diff) < 0.03) return "about the same as " + name;
+      if (s > other * 1.5) return "<b>" + (s / other).toFixed(1) + "× as large</b> as " + name + "'s";
+      return "<b>" + Math.round(Math.abs(diff) * 100) + "% " + (diff > 0 ? "lower" : "higher") + "</b> than " + name + "'s";
+    };
+    var cov = m.hbsae.cov < 0.9
+      ? " HBSAE's intervals cover the truth only <b>" + pct(m.hbsae.cov) + "</b> of the time, because it forces every state to share the same gaps."
+      : "";
+    $("callout").innerHTML = "In this setting, SABDB's error is " + vs(d, "direct estimation") + " and " + vs(h, "HBSAE") + "." + cov +
+      (h < s * 0.8 && m.hbsae.cov >= 0.9 ? " When states really do share the same gaps, HBSAE's assumption is correct and it wins. Try a weaker τ² prior to see SABDB close the gap." : "");
+  }
+
+  function renderSummary(m, missing) {
+    var tb = $("summary").querySelector("tbody");
+    tb.textContent = "";
+    METHODS.forEach(function (meth) {
+      var o = m[meth.key], tr = document.createElement("tr");
+      var c0 = document.createElement("td");
+      var k = document.createElement("span"); k.className = "key"; k.style.setProperty("--c", meth.color);
+      c0.appendChild(k); c0.appendChild(document.createTextNode(meth.name));
+      tr.appendChild(c0);
+      [fmt(o.rmse), (o.bias >= 0 ? "+" : "") + fmt(o.bias), pct(o.cov), fmt(o.w)].forEach(function (v, i) {
+        var td = document.createElement("td"); td.textContent = v;
+        if (i === 2 && o.cov < 0.9) {
+          var pill = document.createElement("span"); pill.className = "pill-warn"; pill.textContent = "⚠ Under-covers";
+          td.appendChild(pill);
+        }
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    var total = acc.rows.length;
+    $("summary-sub").textContent = "Across " + acc.reps + " replications × " + acc.p.states + " states × 4 subgroups. " +
+      (missing ? missing + " of " + total + " cells had fewer than 2 sampled students, so direct estimation couldn't produce an estimate; those are left out here so all three methods are compared on the same cells." : "");
+  }
+
+  function renderRmse() {
+    var chart = $("chart-rmse"); clearSvg(chart);
+    legend("legend-rmse", METHODS.map(function (m) { return { name: m.name, color: m.color }; }));
+    var byG = GROUPS.map(function (_, g) { return metrics(acc.rows, function (r) { return r.g === g; }); });
+    var W = Math.max(280, chart.clientWidth), H = 260, ml = 40, mr = 8, mt = 10, mb = 28;
+    var max = 0; byG.forEach(function (m) { METHODS.forEach(function (x) { if (isFinite(m[x.key].rmse)) max = Math.max(max, m[x.key].rmse); }); });
+    var tk = ticks(max * 1.05 || 1, 4), top = tk[tk.length - 1];
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "RMSE by subgroup and method" });
+    var y = function (v) { return mt + (H - mt - mb) * (1 - v / top); };
+    tk.forEach(function (t) {
+      el("line", { x1: ml, x2: W - mr, y1: y(t), y2: y(t), stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, ml - 6, y(t) + 4, String(t), { "text-anchor": "end" });
+    });
+    var band = (W - ml - mr) / GROUPS.length, gap = 2, bw = Math.min(28, (band * 0.7 - gap * 2) / 3);
+    GROUPS.forEach(function (name, g) {
+      var x0 = ml + band * g + (band - (bw * 3 + gap * 2)) / 2;
+      METHODS.forEach(function (m, i) {
+        var v = byG[g][m.key].rmse; if (!isFinite(v)) return;
+        var x = x0 + i * (bw + gap), yy = y(v);
+        el("path", { d: roundTop(x, yy, bw, y(0) - yy, 4), fill: m.color }, svg);
+        var hit = el("rect", { x: x - 1, y: mt, width: bw + 2, height: y(0) - mt, fill: "transparent" }, svg);
+        attachTip(hit, chart, function () {
+          return [name + " students", METHODS.map(function (mm) { return { label: mm.name, value: fmt(byG[g][mm.key].rmse) + " pts", color: mm.color }; })];
+        });
+      });
+      txt(svg, ml + band * g + band / 2, H - 8, name, { "text-anchor": "middle", class: "strong" });
+    });
+    el("line", { x1: ml, x2: W - mr, y1: y(0), y2: y(0), stroke: "var(--border)", "stroke-width": 1 }, svg);
+    chart.insertBefore(svg, chart.firstChild);
+
+    var tbl = $("rmse-table"); tbl.textContent = "";
+    var head = tbl.insertRow(); ["Subgroup"].concat(METHODS.map(function (m) { return m.name + " RMSE"; })).concat(["SABDB coverage", "HBSAE coverage"]).forEach(function (h) { var th = document.createElement("th"); th.textContent = h; head.appendChild(th); });
+    GROUPS.forEach(function (name, g) {
+      var r = tbl.insertRow(); r.insertCell().textContent = name;
+      METHODS.forEach(function (m) { r.insertCell().textContent = fmt(byG[g][m.key].rmse); });
+      r.insertCell().textContent = pct(byG[g].sabdb.cov); r.insertCell().textContent = pct(byG[g].hbsae.cov);
+    });
+  }
+
+  function renderTau() {
+    var chart = $("chart-tau"); clearSvg(chart);
+    legend("legend-tau", [
+      { name: "SABDB τ", color: "var(--s-sabdb)" }, { name: "HBSAE τ", color: "var(--s-hbsae)" },
+      { name: "True SD in simulation", color: "var(--truth)", cls: "tick" }
+    ]);
+    var p = acc.p, n = acc.reps;
+    var rows = [
+      { name: "State average", sab: acc.tau[0] / n, hb: acc.hbTau / n, truth: p.levelSD },
+      { name: "Black–White gap", sab: acc.tau[1] / n, hb: 0, truth: p.gapSD },
+      { name: "Hispanic–White gap", sab: acc.tau[2] / n, hb: 0, truth: p.gapSD },
+      { name: "Asian–White gap", sab: acc.tau[3] / n, hb: 0, truth: p.gapSD }
+    ];
+    var W = Math.max(260, chart.clientWidth), rowH = 54, mt = 4, H = mt + rows.length * rowH + 22, ml = 8, mr = 40;
+    var max = 0; rows.forEach(function (r) { max = Math.max(max, r.sab, r.hb, r.truth); });
+    var tk = ticks(max * 1.05 || 1, 4), top = tk[tk.length - 1];
+    var x = function (v) { return ml + (W - ml - mr) * v / top; };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "Estimated between-state SD per coefficient" });
+    var axisY = mt + rows.length * rowH;
+    tk.forEach(function (t) {
+      el("line", { x1: x(t), x2: x(t), y1: mt, y2: axisY, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, x(t), axisY + 16, String(t), { "text-anchor": "middle" });
+    });
+    rows.forEach(function (r, i) {
+      var y0 = mt + i * rowH;
+      txt(svg, ml, y0 + 14, r.name, { class: "strong" });
+      var bh = 9;
+      el("path", { d: roundRight(x(0), y0 + 21, Math.max(1, x(r.sab) - x(0)), bh, 3), fill: "var(--s-sabdb)" }, svg);
+      if (r.hb > 0) el("path", { d: roundRight(x(0), y0 + 21 + bh + 2, Math.max(1, x(r.hb) - x(0)), bh, 3), fill: "var(--s-hbsae)" }, svg);
+      else txt(svg, x(0) + 2, y0 + 21 + bh + 10, "HBSAE: fixed at 0", { class: "axis-label" });
+      el("line", { x1: x(r.truth), x2: x(r.truth), y1: y0 + 17, y2: y0 + 21 + bh * 2 + 6, stroke: "var(--truth)", "stroke-width": 2 }, svg);
+      var hit = el("rect", { x: 0, y: y0, width: W, height: rowH, fill: "transparent" }, svg);
+      attachTip(hit, chart, function () {
+        return [r.name, [
+          { label: "SABDB τ", value: fmt(r.sab) + " pts", color: "var(--s-sabdb)" },
+          { label: "HBSAE τ", value: r.hb > 0 ? fmt(r.hb) + " pts" : "0 (assumed)", color: "var(--s-hbsae)" },
+          { label: "True SD", value: fmt(r.truth, 0) + " pts", color: "var(--truth)" }
+        ]];
+      });
+    });
+    chart.insertBefore(svg, chart.firstChild);
+  }
+
+  function renderDots() {
+    var chart = $("chart-dots"); clearSvg(chart);
+    legend("legend-dots", METHODS.map(function (m) { return { name: m.name, color: m.color, cls: "dot" }; })
+      .concat([{ name: "True mean", color: "var(--truth)", cls: "tick" }]));
+    if (!lastRep) return;
+    var g = +$("group").value, gname = GROUPS[g];
+    var rows = lastRep.rows.filter(function (r) { return r.g === g; })
+      .sort(function (a, b) { return a.n - b.n; }).slice(0, 15);
+    var W = Math.max(300, chart.clientWidth), rowH = 30, ml = 92, mr = 12, mt = 6, mb = 26;
+    var H = mt + rows.length * rowH + mb;
+    var lo = Infinity, hi = -Infinity;
+    rows.forEach(function (r) {
+      METHODS.forEach(function (m) { var e = r[m.key]; if (e) { lo = Math.min(lo, e.lo, r.truth); hi = Math.max(hi, e.hi, r.truth); } });
+    });
+    var pad = (hi - lo) * 0.04; lo -= pad; hi += pad;
+    var step = niceMax((hi - lo) / 5), t0 = Math.ceil(lo / step) * step;
+    var x = function (v) { return ml + (W - ml - mr) * (v - lo) / (hi - lo); };
+    var svg = el("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": "Estimates by state for " + gname + " students" });
+    var axisY = mt + rows.length * rowH;
+    for (var t = t0; t <= hi; t += step) {
+      el("line", { x1: x(t), x2: x(t), y1: mt, y2: axisY, stroke: "var(--grid)", "stroke-width": 1 }, svg);
+      txt(svg, x(t), axisY + 17, String(Math.round(t)), { "text-anchor": "middle" });
+    }
+    rows.forEach(function (r, i) {
+      var yc = mt + i * rowH + rowH / 2;
+      txt(svg, 0, yc - 2, "State " + (r.s + 1), { class: "strong" });
+      txt(svg, 0, yc + 11, "n = " + r.n, { class: "axis-label" });
+      METHODS.forEach(function (m, j) {
+        var e = r[m.key], yy = yc + (j - 1) * 7;
+        if (!e) { txt(svg, x(lo) + 2, yy + 4, "no direct estimate", { class: "axis-label" }); return; }
+        el("line", { x1: x(Math.max(lo, e.lo)), x2: x(Math.min(hi, e.hi)), y1: yy, y2: yy, stroke: m.color, "stroke-width": 2, "stroke-linecap": "round" }, svg);
+        el("circle", { cx: x(e.est), cy: yy, r: 4, fill: m.color, stroke: "var(--bg)", "stroke-width": 1.5 }, svg);
+      });
+      el("line", { x1: x(r.truth), x2: x(r.truth), y1: yc - 12, y2: yc + 12, stroke: "var(--truth)", "stroke-width": 2 }, svg);
+      var hit = el("rect", { x: 0, y: yc - rowH / 2, width: W, height: rowH, fill: "transparent" }, svg);
+      attachTip(hit, chart, function () {
+        return ["State " + (r.s + 1) + " · " + gname + " · " + r.n + " sampled", [{ label: "True mean", value: fmt(r.truth), color: "var(--truth)" }].concat(
+          METHODS.map(function (m) { var e = r[m.key]; return { label: m.name, value: e ? fmt(e.est) + "  [" + fmt(e.lo, 0) + ", " + fmt(e.hi, 0) + "]" : "n/a", color: m.color }; }))];
+      });
+    });
+    txt(svg, W - mr, axisY + 17, "NAEP score", { "text-anchor": "end", class: "axis-label" });
+    chart.insertBefore(svg, chart.firstChild);
+    $("dots-sub").textContent = "Estimates and 95% intervals from the latest replication, for the " + rows.length +
+      " states with the fewest sampled " + gname + " students. The black tick is the true population mean.";
+  }
+
+  // ---------- Wire up ----------
+  ids.forEach(function (id) { $(id).addEventListener("input", schedule); });
+  $("prior").addEventListener("change", schedule);
+  $("rerun").addEventListener("click", function () { seed += 104729; start(); });
+  $("group").addEventListener("change", renderDots);
+  var rz; addEventListener("resize", function () { clearTimeout(rz); rz = setTimeout(function () { if (acc && acc.reps) render(); }, 150); });
+  syncOutputs();
+  start();
+})();
+</script>

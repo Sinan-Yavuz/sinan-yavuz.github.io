@@ -1,0 +1,21 @@
+<header class="site-header">
+  <div class="container nav">
+    <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+    <nav aria-label="Main">
+      <a href="{{ '/projects/' | relative_url }}" {% if page.url contains '/projects' %}aria-current="page"{% endif %}>Projects</a>
+      {% assign tools = site.data.projects | where: "type", "tool" %}
+      {% if tools.size > 0 %}
+      <a href="{{ '/tools/' | relative_url }}" {% if page.url contains '/tools' %}aria-current="page"{% endif %}>Tools</a>
+      {% endif %}
+      {% if site.posts.size > 0 %}
+      <a href="{{ '/blog/' | relative_url }}" {% if page.url contains '/blog' %}aria-current="page"{% endif %}>Blog</a>
+      {% endif %}
+      {% if site.author.resume != "" %}
+      <a href="{{ site.author.resume | relative_url }}">CV</a>
+      {% endif %}
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1Z"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
