@@ -53,8 +53,8 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
     <p>Uses only the current data. Close to unbiased, but with few schools its estimates swing widely from sample to sample.</p>
   </div>
   <div class="method" style="--c: var(--s-flat)">
-    <h3>Bayes, flat priors <small>no prior information</small></h3>
-    <p>Lets the data speak alone. In this demo it matches maximum likelihood almost exactly, as it did for fixed effects in the thesis.</p>
+    <h3>Bayes, noninformative <small>no prior information</small></h3>
+    <p>Very wide priors, so the data speak alone. Its fixed-effect estimates matched maximum likelihood closely in the thesis; in this demo they match exactly (see the notes below).</p>
   </div>
   <div class="method" style="--c: var(--s-inf)">
     <h3>Bayes, informative priors <small>this research</small></h3>
@@ -150,7 +150,7 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
           <p class="sub" id="curve-sub">Math scores over time for students in the first replication, with the estimated mean curves for students 1 SD below and above average SES.</p>
         </div>
         <label>Fitted by
-          <select id="curve-method"><option value="inf">Bayes, informative</option><option value="ml">Maximum likelihood</option><option value="flat">Bayes, flat</option></select>
+          <select id="curve-method"><option value="inf">Bayes, informative</option><option value="ml">Maximum likelihood</option><option value="flat">Bayes, noninformative</option></select>
         </label>
       </div>
       <div class="legend" id="legend-curve"></div>
@@ -165,13 +165,13 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
     <p>
       Selected fixed effects from the ECLS-K 2011 analysis, full sample (165 schools, 2,181 students)
       against the random 15-school subsample (198 students). In the full sample the three methods agree
-      closely. In the subsample, maximum likelihood and flat-prior Bayes still agree with each other, but
+      closely. In the subsample, maximum likelihood and noninformative Bayes still agree with each other, but
       the informative priors pull estimates toward the 1998 cohort's values and narrow the intervals.
     </p>
   </div>
   <div class="table-wrap" style="max-width:78ch;margin:1rem 0">
     <table class="data-table">
-      <thead><tr><th>Effect</th><th>Sample</th><th>ML</th><th>Bayes, flat</th><th>Bayes, informative</th></tr></thead>
+      <thead><tr><th>Effect</th><th>Sample</th><th>ML</th><th>Bayes, noninformative</th><th>Bayes, informative</th></tr></thead>
       <tbody>
         <tr><td>Male → start</td><td>Full</td><td>0.18 [−0.74, 1.11]</td><td>0.16 [−0.75, 1.11]</td><td>0.38 [−0.38, 1.12]</td></tr>
         <tr><td></td><td>15 schools</td><td>3.30 [0.03, 6.56]</td><td>3.33 [−0.07, 6.66]</td><td>0.98 [−0.18, 2.16]</td></tr>
@@ -219,7 +219,11 @@ description: Interactive demo from my Hacettepe PhD thesis comparing maximum lik
     <p>
       To run in your browser, estimation is two-stage: a growth curve per student, then a GLS regression of
       each growth coefficient on the covariates with a school random effect. The Bayesian versions combine
-      that likelihood with normal priors. This approximates the full three-level model's fixed effects
+      that likelihood with normal priors; the noninformative one uses priors with SD 10,000. Both methods
+      plug in the same estimates of the variance components instead of averaging over their uncertainty, so
+      noninformative Bayes reproduces maximum likelihood exactly. In the full Bayesian model of the thesis,
+      it gave nearly the same fixed effects, but different variance components and somewhat wider intervals
+      with few schools (Tables 17 and 18). This approximates the full three-level model's fixed effects
       (the thesis used <code>lme4</code> and <code>brms</code>/Stan). Results here illustrate how the
       methods behave; they aren't the thesis's results. Each run uses 200 replications.
     </p>
@@ -237,7 +241,7 @@ estimations] (Doctoral dissertation). Hacettepe University, Ankara.</div>
 (function () {
   var METHODS = [
     { key: "ml", name: "Maximum likelihood", color: "var(--s-ml)" },
-    { key: "flat", name: "Bayes, flat", color: "var(--s-flat)" },
+    { key: "flat", name: "Bayes, noninformative", color: "var(--s-flat)" },
     { key: "inf", name: "Bayes, informative", color: "var(--s-inf)" }
   ];
   var PARAMS = GrowthSim.PARAMS, REPS = 200;
@@ -329,7 +333,7 @@ estimations] (Doctoral dissertation). Hacettepe University, Ankara.</div>
     if (rel < 0.97) s += "informative priors cut the error by <b>" + Math.round((1 - rel) * 100) + "%</b> on average relative to maximum likelihood";
     else if (rel > 1.03) s += "informative priors <b>raise</b> the error by " + Math.round((rel - 1) * 100) + "% on average relative to maximum likelihood";
     else s += "informative priors and maximum likelihood are about equally accurate";
-    s += ". Flat-prior Bayes matches maximum likelihood.";
+    s += ". Noninformative Bayes matches maximum likelihood.";
     if (minCov < 0.88) s += " But the prior is off, so the informative intervals miss the truth too often: coverage for <b>" + worst.name + "</b> drops to <b>" + pct(minCov) + "</b>." + (q.inflate < 5 ? " Inflating the prior variance, as the thesis did for its time terms, restores it." : "");
     else if (q.drift > 0) s += " Even with the prior " + q.drift.toFixed(2) + " SD off, " + (q.inflate > 1 ? "inflating its variance keeps" : "the data keep") + " coverage near 95%.";
     else if (q.schools >= 100) s += " With this much data the prior matters less, which matches the thesis's full-sample results.";

@@ -1,4 +1,4 @@
-// Quadratic growth model: ML vs Bayes with flat priors vs Bayes with priors from an earlier cohort.
+// Quadratic growth model: ML vs noninformative Bayes (very wide priors) vs Bayes with priors from an earlier cohort.
 // Mirrors the design of Yavuz (2021), Hacettepe University PhD thesis:
 //   Level 1: Y_tij = pi0 + pi1 t + pi2 t^2 + e,  t in {0,1,2,3,4,5,7,9,11} (K fall .. grade 5 spring)
 //   Level 2: each pi regressed on male and SES; random student intercept and linear slope
