@@ -1,0 +1,197 @@
+# ---------------------------------------------------------------
+# Publications, grouped into sections on the /publications/ page.
+# Add an item to a section and it appears automatically.
+#
+#   authors: as in the citation; "Yavuz, S." is bolded on the page
+#   year:    publication year (or "In press", "Forthcoming")
+#   title:   title of the work
+#   venue:   journal, publisher, or event, with volume/pages
+#   link:    optional DOI or URL
+#   note:    optional short badge, e.g. "Demo" or "Data product"
+#   demo:    optional path to a demo on this site
+# ---------------------------------------------------------------
+
+- section: Peer-reviewed articles
+  items:
+    - authors: Bamat, D., Yavuz, S., & Grekov, P.
+      year: 2026
+      title: An appraisal of small area estimation methods to explore expansion of state subgroup reporting on NAEP
+      venue: Large-scale Assessments in Education, 14(1), 32
+      link: https://doi.org/10.1186/s40536-026-00306-w
+
+    - authors: Puntambekar, S., Gnesdilow, D., & Yavuz, S.
+      year: 2023
+      title: Understanding the effect of differences in prior knowledge on middle school students' collaborative interactions and learning
+      venue: International Journal of Computer-Supported Collaborative Learning
+      link: https://doi.org/10.1007/s11412-023-09405-0
+
+    - authors: Kaplan, D., Chen, J., Lyu, W., & Yavuz, S.
+      year: 2023
+      title: Bayesian historical borrowing with longitudinal large-scale assessments
+      venue: Large-scale Assessments in Education, 11, 2
+      link: https://doi.org/10.1186/s40536-022-00140-w
+
+    - authors: Kaplan, D., Chen, J., Yavuz, S., & Lyu, W.
+      year: 2022
+      title: Bayesian dynamic borrowing of historical information with applications to the analysis of large-scale assessments
+      venue: Psychometrika
+      link: https://doi.org/10.1007/s11336-022-09869-3
+
+    - authors: Kaplan, D., & Yavuz, S.
+      year: 2020
+      title: An approach to addressing multiple imputation model uncertainty using Bayesian model averaging
+      venue: Multivariate Behavioral Research, 55(4), 553–567
+      link: https://doi.org/10.1080/00273171.2019.1657790
+      demo: /projects/mibma/
+
+    - authors: Dogan, N., Hambleton, R. K., Yurtcu, M., & Yavuz, S.
+      year: 2018
+      title: The comparison of differential item functioning predicted through experts and statistical techniques
+      venue: Cypriot Journal of Educational Sciences, 13(2), 375–384
+      link: https://doi.org/10.18844/cjes.v13i2.2427
+
+    - authors: Ozdemir, A., Yakar, L., & Yavuz, S.
+      year: 2017
+      title: "Examination of mathematics final grade components: Repealing the performance tasks"
+      venue: Usak University Journal of Educational Research, 3(1), 74–91
+
+    - authors: Yavuz, S., Odabas, M., & Ozdemir, A.
+      year: 2016
+      title: Effect of socio-economic status on students' TEOG mathematics achievement
+      venue: Journal of Measurement and Evaluation in Education and Psychology, 7(1)
+
+    - authors: Sari, S., Kilic, N., Kurt, G., Dogulu, F., Ceviker, N., Oz, Y., Donmez, U., Yildirim, Z., & Yavuz, S.
+      year: 2016
+      title: Investigation of serum levels of inwardly rectifying and two-pore potassium channel proteins in benign and malign brain tumors
+      venue: Türkiye Klinikleri Journal of Medical Sciences, 36(1), 7–13
+      link: https://doi.org/10.5336/medsci.2015-46208
+
+- section: Preprints
+  items:
+    - authors: Yavuz, S., & Kaplan, D.
+      year: 2026
+      title: "Small area Bayesian dynamic borrowing: Adaptive subgroup estimation for large-scale educational assessments"
+      venue: arXiv:2608.07708
+      link: https://arxiv.org/abs/2608.07708
+      demo: /projects/sabdb/
+
+- section: Dissertations and theses
+  items:
+    - authors: Yavuz, S.
+      year: 2026
+      title: "Subgroup achievement estimation for large-scale assessments: Small area Bayesian dynamic borrowing model"
+      venue: PhD dissertation, Quantitative Methods, University of Wisconsin–Madison
+      demo: /projects/sabdb/
+
+    - authors: Yavuz, S.
+      year: 2021
+      title: Investigating growth models of academic achievement scores by maximum likelihood and Bayesian estimations
+      venue: PhD dissertation, Educational Measurement and Evaluation, Hacettepe University (in Turkish)
+      demo: /projects/growth/
+
+    - authors: Yavuz, S.
+      year: 2021
+      title: A comparison of the predictive performance of model averaging and model selection methods
+      venue: MS thesis, Quantitative Methods, University of Wisconsin–Madison
+
+- section: Book chapters and proceedings
+  items:
+    - authors: Liao, Y., Bailey, P., & Yavuz, S.
+      year: ""
+      title: Models
+      venue: "In P. Bailey & T. Zhang (Eds.), Analyzing NCES Data Using EdSurvey: A User's Guide"
+      link: https://naep-research.airprojects.org/Portals/0/EdSurvey_A_Users_Guide/_book/models.html
+
+    - authors: Bailey, P., Cohen, M., & Yavuz, S.
+      year: ""
+      title: Statistical methods used in EdSurvey
+      venue: "In P. Bailey & T. Zhang (Eds.), Analyzing NCES Data Using EdSurvey: A User's Guide"
+      link: https://naep-research.airprojects.org/Portals/0/EdSurvey_A_Users_Guide/_book/methods.html
+
+    - authors: Yavuz, S., Forkner, M., Gnesdilow, D., Dornfeld-Tissenbaum, C. L., Kim, J., & Puntambekar, S.
+      year: 2019
+      title: Understanding the effect of group variance on learning
+      venue: 13th International Conference on Computer Supported Collaborative Learning (CSCL 2019), Vol. 1, 520–525
+
+- section: Reports and data products
+  items:
+    - authors: Yavuz, S., Bailey, P., Zhang, T., & Sikali, E.
+      year: 2024
+      title: Simulated 2015 NAEP Grade 8 Mathematics public-use methodological data files data companion (NCES 2024-013)
+      venue: National Center for Education Statistics, U.S. Department of Education
+      note: Data product
+
+    - authors: National Center for Education Statistics
+      year: 2023
+      title: Full population estimates, 2022 NAEP grades 4 and 8 mathematics and reading results
+      venue: U.S. Department of Education (bias-correction modeling led by S. Yavuz at AIR)
+      link: https://nces.ed.gov/nationsreportcard/about/fpe.aspx
+
+    - authors: Yavuz, S., Bai, Y., Zheng, X., & Broer, M.
+      year: 2022
+      title: "Multiple imputation approach to missingness at the school level: A comparison study"
+      venue: Research Study No. 43, AIR–ESSIN
+
+- section: Software
+  items:
+    - authors: Bailey, P., Emad, A., Huo, H., Lee, M., Liao, Y., Lishinski, A., Nguyen, T., Xie, Q., Yu, J., Zhang, T., Buehler, E., Lee, S., Webb, B., Fink, T., & Yavuz, S.
+      year: 2024
+      title: "EdSurvey: Analysis of NCES education survey and assessment data"
+      venue: R package, 70,000+ CRAN downloads
+      link: https://www.air.org/project/nces-data-r-project-edsurvey
+
+    - authors: Yavuz, S.
+      year: ""
+      title: "SABDB: Small area Bayesian dynamic borrowing"
+      venue: R implementation
+      link: https://github.com/Sinan-Yavuz/SABDB
+      demo: /projects/sabdb/
+
+    - authors: Yavuz, S.
+      year: ""
+      title: "miBMA: Multiple imputation under Bayesian model averaging"
+      venue: R package
+      link: https://github.com/Sinan-Yavuz/miBMA
+      demo: /projects/mibma/
+
+    - authors: Lyu, W., Ye, S., Chen, J., Yavuz, S., & Kaplan, D.
+      year: ""
+      title: "ShinyBHB: A Shiny app for Bayesian historical borrowing in large-scale assessments"
+      venue: R Shiny application (contributor)
+
+- section: Selected talks
+  items:
+    - authors: Yavuz, S.
+      year: 2026
+      title: An area-level small area Bayesian dynamic borrowing model
+      venue: National Council on Measurement in Education (NCME)
+
+    - authors: Yavuz, S.
+      year: 2025
+      title: "An innovative way of estimating subgroup mean estimates: SABDB"
+      venue: NCME, Denver, CO
+
+    - authors: Yavuz, S., Webb, B., Zhang, T., Liao, Y., & Sikali, E.
+      year: 2024
+      title: Generative AI chatbot for large-scale assessment data analysis
+      venue: NCME, Philadelphia, PA
+
+    - authors: Yavuz, S., & Kim, Y. Y.
+      year: 2024
+      title: Potential effect of absenteeism on declines of students' performance in NAEP 2022
+      venue: NCME, Philadelphia, PA
+
+    - authors: Yavuz, S., Sikali, E., Zhang, T., & Bailey, P.
+      year: 2024
+      title: Using R and generative AI for NAEP data analysis (workshop)
+      venue: American Educational Research Association (AERA), Philadelphia, PA
+
+    - authors: Kaplan, D., Chen, J., Yavuz, S., & Lyu, W.
+      year: 2022
+      title: Bayesian dynamic borrowing with applications to large-scale educational assessments
+      venue: International Society for Bayesian Analysis (ISBA) World Meeting, Montreal, Canada
+
+    - authors: Yavuz, S., & Kaplan, D.
+      year: 2020
+      title: Comparison of model averaging and model selection methods
+      venue: International Meeting of the Psychometric Society (IMPS)
