@@ -15,12 +15,12 @@ author:
   name: Sinan Yavuz
   location: Seattle, WA
   # Optional: leave a field blank ("") and its link is hidden.
-  email: ""            # e.g. you@example.com
+  email: yavuzsinan@gmail.com
   github: Sinan-Yavuz
   linkedin: yavuzsinan  # LinkedIn handle only
   orcid: 0000-0003-3131-7820
-  scholar: ""          # Full Google Scholar URL
-  resume: ""           # e.g. /assets/Sinan-Yavuz-CV.pdf (put the PDF in assets/)
+  scholar: "https://scholar.google.com/citations?user=GAx-LwQAAAAJ"
+  resume: /assets/Sinan-Yavuz-CV.pdf
 
 # ---------------------------------------------------------------
 # Build settings (all supported by GitHub Pages out of the box)

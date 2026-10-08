@@ -114,3 +114,15 @@ blockquote { margin: 1.5rem 0; padding: .25rem 1rem; border-left: 3px solid var(
   .nav nav { gap: .8rem; }
   .brand { font-size: .95rem; }
 }
+
+/* Publications */
+.pub-cv { color: var(--muted); margin: -1rem 0 1rem; }
+.pub-section { padding: 1.5rem 0; border-top: 1px solid var(--border); }
+.pub-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.1rem; }
+.pub-list p { margin: 0; }
+.pub-title { font-weight: 600; text-wrap: pretty; }
+.pub-title a { color: var(--text); }
+.pub-title a:hover { color: var(--accent); }
+.pub-meta { color: var(--muted); font-size: .92rem; }
+.pub-meta strong { color: var(--text); }
+.pub-links { font-size: .9rem; margin-top: .15rem !important; }

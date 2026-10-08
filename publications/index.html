@@ -1,0 +1,22 @@
+---
+layout: page
+title: Publications
+intro: Papers, preprints, software, and talks. Several come with an interactive demo you can run in your browser.
+---
+{% if site.author.resume != "" %}
+<p class="pub-cv">For the complete list of presentations, workshops, and technical reports, see my <a href="{{ site.author.resume | relative_url }}">CV (PDF)</a>.</p>
+{% endif %}
+{% for group in site.data.publications %}
+<section class="pub-section">
+  <h2>{{ group.section }}</h2>
+  <ol class="pub-list">
+    {% for p in group.items %}
+    <li>
+      <p class="pub-title">{% if p.link %}<a href="{{ p.link }}">{{ p.title }}</a>{% else %}{{ p.title }}{% endif %}{% if p.note %} <span class="badge">{{ p.note }}</span>{% endif %}</p>
+      <p class="pub-meta">{{ p.authors | replace: "Yavuz, S.", "<strong>Yavuz, S.</strong>" }}{% if p.year != "" %} ({{ p.year }}){% endif %}. <em>{{ p.venue }}</em></p>
+      {% if p.demo %}<p class="pub-links"><a href="{{ p.demo | relative_url }}">Interactive demo →</a></p>{% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
